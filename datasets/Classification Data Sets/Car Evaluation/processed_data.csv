@@ -1,0 +1,12 @@
+,0,1,2,3,4,5,6
+0,vhigh,vhigh,2,,small,low,unacc
+1,vhigh,vhigh,2,2,small,,unacc
+2,vhigh,vhigh,2,2,small,high,unacc
+3,vhigh,vhigh,2,2,med,low,unacc
+4,vhigh,vhigh,2,2,med,med,unacc
+5,vhigh,vhigh,2,2,med,high,unacc
+6,vhigh,vhigh,2,2,big,low,unacc
+7,vhigh,vhigh,2,2,big,med,unacc
+8,vhigh,vhigh,2,2,big,high,unacc
+9,vhigh,vhigh,2,4,small,low,unacc
+10,vhigh,vhigh,2,2,small,low,unacc
