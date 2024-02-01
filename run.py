@@ -8,13 +8,45 @@ from inference_pipeline import model as model_selector
 
 class Pipeline:
     def __init__(self, config):
-        self.model, self.data, self.mode = config # filepath
+        self.model, self.data, self.mode, self.splits = self.load_config(config)
+
+    def load_config(self, config):
+        model_name = config['model']
+        dataset = config['dataset']
+        mode = config['mode']
+        splits = config['cross_validation_splits']
+
+        ## Add current working directory to path
+        root_dir = os.getcwd()
+        sys.path.append(root_dir)
+
+        ## Import the model config file
+        model_fullpath = os.path.join(root_dir, 'inference_pipeline', model_name)
+
+        ## Import the dataset config file
+        if dataset == 'car':
+            directory = os.path.join(root_dir, 'datasets', 'Classification Data Sets', 'Car Evaluation')
+        elif dataset == 'breat-cancer-wisconsin':
+            directory = os.path.join(root_dir, 'datasets', 'Classification Data Sets', 'Breast Cancer')
+        elif dataset == 'house-votes-84':
+            directory = os.path.join(root_dir, 'datasets', 'Classification Data Sets', 'Congressional Voting Records')
+        elif dataset == 'abalone':
+            directory = os.path.join(root_dir, 'datasets', 'Regression Data Sets', 'Abalone')
+        elif dataset == 'machine':
+            directory = os.path.join(root_dir, 'datasets', 'Regression Data Sets', 'Computer Hardware')
+        elif dataset == 'forestfires':
+            directory = os.path.join(root_dir, 'datasets', 'Regression Data Sets', 'Forest Fires')
+        elif dataset == 'racetracks':
+            directory = os.path.join(root_dir, 'datasets', 'Reinforcement Learning Data Sets', 'Racetracks')
+        data_fullpath = os.path.join(directory, dataset) 
+
+        return (model_fullpath, data_fullpath, mode, splits)
 
     # Build the pipeline
     def _build_pipeline(self):
         # 1. Load data and preprocess it
         print('\n*** start of data transformation ***\n')
-        data = data_transformer.DataTransformer(self.data).process()
+        data = data_transformer.DataTransformer(self.data, self.mode, self.splits).process()
         print('\n*** end of data transformation ***\n')
         # 2. Create the model (and train it if in training mode)
         print('\n*** start of model selection ***\n')
@@ -43,35 +75,13 @@ class Pipeline:
         print('Pipeline complete.\n')
         return None
 
-def load_config(model_name, dataset, mode):
-
-    ## Add current working directory to path
-    sys.path.append(os.getcwd())
-
-    ## Import the model config file
-    model_fullpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'inference_pipeline', model_name)
-    
-    ## Import the dataset config file
-    if dataset == 'car':
-        directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'datasets', 'Classification Data Sets', 'Car Evaluation')
-    elif dataset == 'breat-cancer-wisconsin':
-        directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'datasets', 'Classification Data Sets', 'Breast Cancer')
-    elif dataset == 'house-votes-84':
-        directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'datasets', 'Classification Data Sets', 'Congressional Voting Records')
-    elif dataset == 'abalone':
-        directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'datasets', 'Regression Data Sets', 'Abalone')
-    elif dataset == 'machine':
-        directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'datasets', 'Regression Data Sets', 'Computer Hardware')
-    elif dataset == 'forestfires':
-        directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'datasets', 'Regression Data Sets', 'Forest Fires')
-    elif dataset == 'racetracks':
-        directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'datasets', 'Reinforcement Learning Data Sets', 'Racetracks')
-    data_fullpath = os.path.join(directory, dataset) 
-
-    return (model_fullpath, data_fullpath, mode)
-
 def main():
-    config = load_config(model_name = 'null_model', dataset = 'car', mode = 'training')
+    config = {
+        'model': 'null_model',       # choose from 'null_model'
+        'dataset': 'car',            # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
+        'mode': 'training',          # choose from 'training', 'inference'
+        'cross_validation_splits': 5 # number of experiments 'k' to run k x 2 cross validation
+    }
     pipeline = Pipeline(config)
     pipeline.run()
 
