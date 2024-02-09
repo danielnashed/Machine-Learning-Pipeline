@@ -1,4 +1,5 @@
 import configparser
+import copy
 from itertools import product
 from training_pipeline import evaluator as __evaluator__
 
@@ -7,6 +8,7 @@ from training_pipeline import evaluator as __evaluator__
 class Learner:
     def __init__(self, model_meta):
         self.model, self.config = model_meta
+        self.logs = {}
 
     # Hyperparameter tuning
     def hyperparameter_tuning(self, data):
@@ -29,8 +31,10 @@ class Learner:
             metrics_all_models.append((dict(zip(parameters, combination)), metrics_averaged))
         best_model = max(metrics_all_models, key=lambda x: x[1]['accuracy'])
         self.model.set_params(best_model[0])
-        ## save best hyperparameters to log file
-        print('Training the model...')
+        # validation curve: should produce logs of model metric as function of hyperparameter
+        self.export_logs(validation_metrics = metrics_all_models, learning_metrics = None)
+        print('Finetuning model hyperparameters...')
+        print(f"Best hyperparameters: {best_model[0]}")
         return None
 
     def get_average(self, metrics_all_experiements):
@@ -43,13 +47,20 @@ class Learner:
     def train_model(self, data):
         evaluator = __evaluator__.Evaluator(self.model, self.config)
         metrics_all_experiements = []
+        models = []
         for experiment in data:
             X_train, y_train, X_test, y_test = experiment
-            self.model.fit(X_train, y_train)
+            learning_metrics = self.model.fit(X_train, y_train)
+            model = copy.deepcopy(self.model)
+            self.export_logs(validation_metrics = None, learning_metrics = {'model': model, 'learning_metrics': learning_metrics})
+            models.append(model) # save the model
             y_test_pred = self.model.predict(X_test)
             metrics_all_experiements.append(evaluator.evaluate(y_test, y_test_pred))
         metrics_averaged = self.get_average(metrics_all_experiements)
+        best_model = models[metrics_all_experiements.index(max(metrics_all_experiements, key=lambda x: x['accuracy']))]
+        self.model = best_model
         print('Training the model...')
+        print(f"Average metrics for trained model: {metrics_averaged: .3f}")
         return None
 
     def export_model(self):
@@ -57,8 +68,12 @@ class Learner:
         print('Exporting the model...')
         return None
 
-    def export_logs(self):
+    def export_logs(self, validation_metrics: None, learning_metrics: None):
         # Export the logs
+        if validation_metrics:
+            self.logs['validation_metrics'] = validation_metrics
+        if learning_metrics:
+            self.logs['learning_metrics'] = learning_metrics
         print('Exporting the logs...')
         return None
 
@@ -67,6 +82,4 @@ class Learner:
         train_validation_data, train_test_data = data
         self.hyperparameter_tuning(train_validation_data)
         self.train_model(train_test_data)
-        self.export_model()
-        self.export_logs()
-        return self.model
+        return (self.model, self.logs)

@@ -16,10 +16,13 @@ class NullModel:
         #                         "kernel": hyperparameters[2]}
 
     def fit(self, X, y):
+        # learning curve: should produce logs of model metric as function of % of trainng data used for training
+        learning_metrics = None
         if self.prediction_type == 'classification':
             self.function = y.mode()[0]
         elif self.prediction_type == 'regression':
             self.function = y.mean()
+        return learning_metrics
     
     def predict(self, X):
         y_pred = []

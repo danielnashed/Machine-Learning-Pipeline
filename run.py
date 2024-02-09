@@ -54,19 +54,22 @@ class Pipeline:
         print('\n*** end of model selection ***\n')
         if self.mode == 'training':
             print('\n*** start of model training ***\n')
-            model = learner.Learner(model).learn(data)
+            model, logs = learner.Learner(model).learn(data)
+            metrics = None
             print('\n*** end of model training ***\n')
-        # 3. Run model inference
-        print('\n*** start of model prediction ***\n')
-        predictions = model.predict(data)
-        print('\n*** end of model prediction ***\n')
-        # 4. Evaluate the model
-        print('\n*** start of model evaluation ***\n')
-        metrics = evaluator.Evaluator(self.model).evaluate(data, predictions)
-        print('\n*** end of model evaluation ***\n')
+        elif self.mode == 'inference':
+            # 3. Run model inference
+            print('\n*** start of model prediction ***\n')
+            predictions = model.predict(data)
+            print('\n*** end of model prediction ***\n')
+            # 4. Evaluate the model
+            print('\n*** start of model evaluation ***\n')
+            metrics = evaluator.Evaluator(self.model).evaluate(data, predictions)
+            logs = None
+            print('\n*** end of model evaluation ***\n')
         # 5. Visualize the results
         print('\n*** start of dashboard visuals ***\n')
-        dashboard.Dashboard(self.mode).visualize(metrics)
+        dashboard.Dashboard(self.mode).visualize(metrics = metrics, logs = logs)
         print('\n*** end of dashboard visuals ***\n')
 
     # Run the pipeline

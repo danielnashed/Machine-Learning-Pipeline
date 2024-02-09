@@ -64,10 +64,12 @@ class DataTransformer:
         print('Handling outlier data...')
         return None
 
+    # convert categorical data to numeric discrete data
     def handle_categorical_data(self):
         column_types = self.config.items('column_types')
         column_encodings = self.config.items('column_encodings')
-        for i, column in column_types:
+        # handle all categorical columns in data except target column
+        for i, column in column_types[:-1]:
             # if the column is a categorical ordinal type, encode using integer encoding
             if column == 'categorical ordinal':
                 self.data[int(i)] = self.data[int(i)].replace(eval(column_encodings[int(i)][1]))
@@ -84,10 +86,12 @@ class DataTransformer:
         print('Handling categorical data...')
         return None
 
+    # convert continuous data to discrete data
     def discretize_data(self):
         discretize_types = self.config.items('discretization')
         column_types = self.config.items('column_types')
-        for discretize_section, column_section in zip(discretize_types, column_types):
+        # handle all columns in data except target column
+        for discretize_section, column_section in zip(discretize_types[:-1], column_types[:-1]):
             col, discretize_type = discretize_section
             _, column_type = column_section
             # if column has no discretization type or is categorical, skip
@@ -105,8 +109,6 @@ class DataTransformer:
     
     # Split the data into train and validation sets
     def split_data(self):
-        if self.mode != 'training':
-            return
         train_data = self.data.sample(frac=0.8, random_state=42)
         validation_data = self.data.drop(train_data.index)
         self.data = [train_data, validation_data]
@@ -124,9 +126,10 @@ class DataTransformer:
             train_data = pd.DataFrame()
             test_data = pd.DataFrame()
             for class_label, distribution in class_label_distribution:
-                distribution = float(distribution)/100 # convert % to decimal probability 
-                encoded_class_label = eval(column_encodings[-1][1])[class_label] # get integer encoding of class label
-                class_data = data[data.iloc[:, -1] == encoded_class_label] # get all rows with class label
+                #distribution = float(distribution)/100 # convert % to decimal probability 
+                #encoded_class_label = eval(column_encodings[-1][1])[class_label] # get integer encoding of class label
+                # class_data = data[data.iloc[:, -1] == encoded_class_label] # get all rows with class label
+                class_data = data[data.iloc[:, -1] == class_label] # get all rows with class label
                 train_class_data = class_data.sample(frac=0.5, random_state=42) # 50% of class data goes to train
                 test_class_data = class_data.drop(train_class_data.index) # remaining 50% goes to test
                 # train_data = train_data.concat(train_class_data) # add train data to train set
@@ -189,6 +192,29 @@ class DataTransformer:
         print('Transforming the data...')
         return train_test_transformed_data_outer
 
+    # Transform the data - either normalize or standardize
+    def transform_inference_data(self, data):
+        transform_types = self.config.items('transformation')
+        column_types = self.config.items('column_types')
+        for transform_section, column_section in zip(transform_types, column_types):
+            col, transform_type = transform_section
+            _, column_type = column_section
+            # if column has no transformation type or is categorical type, skip
+            if len(transform_type) == 0 or column_type.split()[0] == 'categorical':
+                continue
+            # for normalization, scale the data to be between 0 and 1
+            if list(eval(transform_type).keys())[0] == 'normalization':
+                data_min = data[int(col)].min()
+                data_max = data[int(col)].max()
+                data[int(col)] = (data[int(col)] - data_min) / (data_max - data_min)
+            # for standardization, scale the data to have mean 0 and standard deviation 1
+            elif list(eval(transform_type).keys())[0] == 'standardization':
+                data_mean = data[int(col)].mean()
+                data_std = data[int(col)].std()
+                data[int(col)] = (data[int(col)] - data_mean) / data_std
+        print('Transforming the data...')
+        return data
+
     def get_features_labels(self, data):
         for i in range(len(data)):
             train_data, test_data = data[i]
@@ -222,14 +248,18 @@ class DataTransformer:
         self.handle_outlier_data()
         self.handle_categorical_data()
         self.discretize_data()
-        self.split_data()
-        train_validation_data = self.data_for_hyperparameter_tuning()
-        train_validation_data = self.transform_data(train_validation_data)
-        train_validation_data = self.get_features_labels(train_validation_data)
-        train_test_data = self.data_for_model_training()
-        train_test_data = self.transform_data(train_test_data)
-        train_test_data = self.get_features_labels(train_test_data)
-        #self.extract_features()
-        self.export_data()
-        self.data = [train_validation_data, train_test_data]
-        return self.data
+        if self.mode == 'training':
+            self.split_data()
+            train_validation_data = self.data_for_hyperparameter_tuning()
+            train_validation_data = self.transform_data(train_validation_data)
+            train_validation_data = self.get_features_labels(train_validation_data)
+            train_test_data = self.data_for_model_training()
+            train_test_data = self.transform_data(train_test_data)
+            train_test_data = self.get_features_labels(train_test_data)
+            self.export_data()
+            self.data = [train_validation_data, train_test_data]
+            return self.data
+        elif self.mode == 'inference':
+            self.data = self.transform_inference_data(self.data)
+            return self.data
+        return None
