@@ -6,7 +6,7 @@ import configparser
 # input is inference data
 # output is predictions
 class Model:
-    def __init__(self, directory_path):
+    def __init__(self, directory_path, positive_class):
         model_name = os.path.basename(directory_path) # get the model name
         model_path = f"inference_pipeline.{model_name}.{model_name}" # get the model path relative to directory of this file
         imp = importlib.import_module(model_path) # import the model
@@ -17,6 +17,7 @@ class Model:
         config_path = os.path.join(directory_path, model_name + '.config') # setup model based on config file proided 
         self.config =  self.load_config(config_path)
         self.model = None # model
+        self.positive_class = positive_class
 
     def load_config(self, config_path):
         # Create a ConfigParser object
@@ -30,12 +31,14 @@ class Model:
     def select(self):
         # instantiate the model
         self.model = self.module_class_object()
-        # commit as classifier or regressor 
+        # set as classifier or regressor 
         prediction_types = dict(self.config.items('prediction_type'))
         if int(prediction_types['classification']) == 1:
             self.model.prediction_type = 'classification'
         elif int(prediction_types['regression']) == 1:
             self.model.prediction_type = 'regression'
+        # set the positive class
+        self.model.positive_class = self.positive_class
         print('Selecting the model...')
         return (self.model, self.config)
 

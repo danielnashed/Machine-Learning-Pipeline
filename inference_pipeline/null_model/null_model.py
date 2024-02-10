@@ -5,6 +5,7 @@ class NullModel:
         self.hyperparameters = None
         self.prediction_type = None
         self.function = None
+        self.positive_class = None # positive class (if binary classification is used)
     
     # def set_params(self, **kwargs):
     #     pass

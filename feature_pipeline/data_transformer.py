@@ -15,6 +15,7 @@ class DataTransformer:
         self.data = None
         self.mode = mode
         self.splits = splits
+        self.positive_class = None
 
     def load_config(self):
         # Create a ConfigParser object
@@ -42,20 +43,43 @@ class DataTransformer:
             self.data = self.data.iloc[:-1]
         print('Loading the data...')
         return None
+    
+    def set_poitive_class(self):
+        self.positive_class = self.config.items('positive_class')[0][1].strip()
+        print('Setting the positive class...')
+        return None
+
+    def remove_features(self):
+        cols_2_remove = self.config.items('remove_features')
+        # extract the column indices to remove
+        for col in cols_2_remove:
+            if col[1] == '1':
+                self.data = self.data.drop(columns=int(col[0]))
+        print('Removing features...')
+        return None
 
     # Handle missing data
     def handle_missing_data(self):
-        # convert all numeric columns to numric type 
-        self.data.convert_dtypes(convert_integer=True)
-        # get data type of each column
-        column_types = self.data.dtypes
-        for column in column_types.index:
+        column_types = self.config.items('column_types')
+        missing_values = self.config.items('missing_values')
+        missing_values = [line[1] for line in missing_values]
+        for column, column_type in column_types:
+            # check if column exists in dataframe 
+            if int(column) not in self.data.columns:
+                continue
             # if the column is a category type, fill with mode of column
-            if column_types[column] == 'object':
-                self.data[column] = self.data[column].fillna(self.data[column].mode()[0])
+            if column_type.strip().split()[0] == 'categorical':
+                # if column contains missing values, replace with NaN
+                if len(missing_values) != 0:
+                    self.data[int(column)] = self.data[int(column)].replace(missing_values, np.nan)
+                # fill NaNs with mode of column
+                self.data[int(column)] = self.data[int(column)].fillna(self.data[int(column)].mode()[0])
             # if the column is a number type, fill with mean of column
-            elif column_types[column] == 'number':
-                self.data[column] = self.data[column].fillna(self.data[column].mean())
+            elif column_type.strip() == 'numerical':
+                if len(missing_values) != 0:
+                    self.data[int(column)] = self.data[int(column)].replace(missing_values, np.nan)
+                    self.data[int(column)] = pd.to_numeric(self.data[int(column)])
+                self.data[int(column)] = self.data[int(column)].fillna(self.data[int(column)].mean())
         print('Handling missing data...')
         return None
 
@@ -74,15 +98,14 @@ class DataTransformer:
             if column == 'categorical ordinal':
                 self.data[int(i)] = self.data[int(i)].replace(eval(column_encodings[int(i)][1]))
                 self.data[int(i)] = self.data[int(i)].astype(float)  # cast to numeric type
-                # self.data[int(i)] = self.data[int(i)].astype('category') # cast to categorical type
-                # self.data[int(i)] = self.data[int(i)].cat.codes # encode using integer encoding
             # if the column is a categorical nominal type, encode using one-hot encoding
             elif column == 'categorical nominal':
                 self.data = pd.get_dummies(self.data, columns=[int(i)], dtype=float)
-        # reorder columns to match the order in the config file
-        columns_order = sorted([str(col_name) for col_name in self.data.columns.tolist()])
-        columns_order = [int(col_name) if col_name.isdigit() else col_name for col_name in columns_order]  
-        self.data = self.data[columns_order] 
+        # reorder columns to match the order in the config file only if hot encoding was used
+        if  any('categorical nominal' in tuple for tuple in column_types):
+            columns_order = sorted([str(col_name) for col_name in self.data.columns.tolist()])
+            columns_order = [int(col_name) if col_name.isdigit() else col_name for col_name in columns_order]  
+            self.data = self.data[columns_order] 
         print('Handling categorical data...')
         return None
 
@@ -120,20 +143,14 @@ class DataTransformer:
     def split_into_k_folds(self, data):
         # get class label distribution from config file
         class_label_distribution = self.config.items('class_distribution')
-        column_encodings = self.config.items('column_encodings')
         k_folds = []
         for k in range(self.splits):
             train_data = pd.DataFrame()
             test_data = pd.DataFrame()
-            for class_label, distribution in class_label_distribution:
-                #distribution = float(distribution)/100 # convert % to decimal probability 
-                #encoded_class_label = eval(column_encodings[-1][1])[class_label] # get integer encoding of class label
-                # class_data = data[data.iloc[:, -1] == encoded_class_label] # get all rows with class label
-                class_data = data[data.iloc[:, -1] == class_label] # get all rows with class label
+            for class_label, _ in class_label_distribution:
+                class_data = data[data.iloc[:, -1].astype('str') == class_label] # get all rows with class label
                 train_class_data = class_data.sample(frac=0.5, random_state=42) # 50% of class data goes to train
                 test_class_data = class_data.drop(train_class_data.index) # remaining 50% goes to test
-                # train_data = train_data.concat(train_class_data) # add train data to train set
-                # test_data = test_data.concat(test_class_data) # add test data to test set
                 train_data = pd.concat([train_data, train_class_data]) # add train data to train set
                 test_data = pd.concat([test_data, test_class_data]) # add test data to test set
             k_folds.append([train_data, test_data])
@@ -244,6 +261,8 @@ class DataTransformer:
     def process(self):
         self.load_config()
         self.load_data()
+        self.set_poitive_class()
+        self.remove_features()
         self.handle_missing_data()
         self.handle_outlier_data()
         self.handle_categorical_data()
@@ -258,8 +277,8 @@ class DataTransformer:
             train_test_data = self.get_features_labels(train_test_data)
             self.export_data()
             self.data = [train_validation_data, train_test_data]
-            return self.data
+            return (self.data, self.positive_class)
         elif self.mode == 'inference':
             self.data = self.transform_inference_data(self.data)
-            return self.data
+            return (self.data, self.positive_class)
         return None

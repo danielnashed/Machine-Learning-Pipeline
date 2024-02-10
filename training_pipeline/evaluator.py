@@ -4,6 +4,7 @@ class Evaluator:
     def __init__(self, model, config):
         self.config = config # config file for model contains what metrics to use for evaluation
         self.prediction_type = model.prediction_type # get the type of prediction
+        self.positive_class = model.positive_class # get the positive class (if binary classification)
         self.metrics = None
 
     # Evaluate the model
@@ -16,30 +17,78 @@ class Evaluator:
         return self.metrics
     
 
-    # need to modify to handle multiclass classification
-    def compute_confusion_matrix(self, labels, predictions):
+    def count_positives_negatives(self, labels, predictions):
         TP = 0
         FP = 0
         TN = 0
         FN = 0
+        # convert all values to strings for comparison. positive class is also a string.
         for i in range(len(labels)):
-            if predictions.iloc[i,0] == labels.iloc[i]:
+            if str(predictions.iloc[i,0]) == str(labels.iloc[i]) and str(labels.iloc[i]) == self.positive_class:
                 TP += 1
-            # if labels[i] == 1 and predictions[i] == 1:
-            #     TP += 1
-            # elif labels[i] == 0 and predictions[i] == 1:
-            #     FP += 1
-            # elif labels[i] == 0 and predictions[i] == 0:
-            #     TN += 1
-            # elif labels[i] == 1 and predictions[i] == 0:
-            #     FN += 1
+            elif str(predictions.iloc[i,0]) == self.positive_class and str(labels.iloc[i]) != self.positive_class:
+                FP += 1
+            elif str(predictions.iloc[i,0]) != self.positive_class and str(labels.iloc[i]) != self.positive_class:
+                TN += 1
+            elif str(predictions.iloc[i,0]) != self.positive_class and str(labels.iloc[i]) == self.positive_class:
+                FN += 1
+        return TP, FP, TN, FN
+
+    # need to modify to handle multiclass classification
+    def compute_confusion_matrix(self, labels, predictions):
+        # if binary classification, then use positive class
+        if self.positive_class != '':
+            TP, FP, TN, FN = self.count_positives_negatives(labels, predictions)
+            #confusion_matrix = [[TP, FP], [FN, TN]]
+        # if multiclass classification, then use all classes
+        else:
+            # get unique classes from labels
+            classes = sorted(set(labels))
+            # encode classes as integers to use as indices in confusion matrix
+            #class_to_index = {c: i for i, c in enumerate(classes)}
+            # convert labels, predictions, and classes to integers
+            #labels = [class_to_index[label] for label in labels]
+            #predictions = [class_to_index[prediction] for prediction in predictions]
+            #classes = [class_to_index[c] for c in classes]
+            # initialize confusion matrix with zeros with size NxN where N is the number of classes
+            #confusion_matrix = [[0 for _ in classes] for _ in classes]
+            # initialize counters for TP, TN, FP, FN
+            TP = {c: 0 for c in classes}
+            TN = {c: 0 for c in classes}
+            FP = {c: 0 for c in classes}
+            FN = {c: 0 for c in classes}
+            # calculate the confusion matrix and TP, TN, FP, FN for each class
+            for label, prediction in zip(labels, predictions.iloc[:, 0].values):
+                #confusion_matrix[label][prediction] += 1
+                for c in classes:
+                    # case where label is positive class
+                    if label == c:
+                        # correctly predicted positive class
+                        if prediction == c:
+                            TP[c] += 1
+                        # incorrectly predicted as negative class
+                        else:
+                            FN[c] += 1
+                    # case where label is negative class
+                    else:
+                        # correctly predicted negative class
+                        if prediction == c:
+                            FP[c] += 1
+                        # incorrectly predicted as positive class
+                        else:
+                            TN[c] += 1 
+            # calculate average TP, TN, FP, FN for all classes
+            TP = sum(TP.values()) / len(classes)
+            TN = sum(TN.values()) / len(classes)
+            FP = sum(FP.values()) / len(classes)
+            FN = sum(FN.values()) / len(classes)
         return TP, FP, TN, FN
     
 
     # calculate classification metrics
     def classification_metrics(self, labels, predictions):
-        TP, FP, TN, FN = self.compute_confusion_matrix(labels, predictions)
         target_metrics = dict(self.config.items('evaluation_metrics'))
+        TP, FP, TN, FN = self.compute_confusion_matrix(labels, predictions)
         metrics = {}
         if int(target_metrics['accuracy']) == 1:
             accuracy = (TP + TN) / len(predictions)

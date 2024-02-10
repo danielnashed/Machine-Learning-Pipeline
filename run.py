@@ -26,7 +26,7 @@ class Pipeline:
         ## Import the dataset config file
         if dataset == 'car':
             directory = os.path.join(root_dir, 'datasets', 'Classification Data Sets', 'Car Evaluation')
-        elif dataset == 'breat-cancer-wisconsin':
+        elif dataset == 'breast-cancer-wisconsin':
             directory = os.path.join(root_dir, 'datasets', 'Classification Data Sets', 'Breast Cancer')
         elif dataset == 'house-votes-84':
             directory = os.path.join(root_dir, 'datasets', 'Classification Data Sets', 'Congressional Voting Records')
@@ -46,11 +46,11 @@ class Pipeline:
     def _build_pipeline(self):
         # 1. Load data and preprocess it
         print('\n*** start of data transformation ***\n')
-        data = data_transformer.DataTransformer(self.data, self.mode, self.splits).process()
+        data, pos_class = data_transformer.DataTransformer(self.data, self.mode, self.splits).process()
         print('\n*** end of data transformation ***\n')
         # 2. Create the model (and train it if in training mode)
         print('\n*** start of model selection ***\n')
-        model = model_selector.Model(self.model).select()
+        model = model_selector.Model(self.model, pos_class).select()
         print('\n*** end of model selection ***\n')
         if self.mode == 'training':
             print('\n*** start of model training ***\n')
@@ -81,7 +81,7 @@ class Pipeline:
 def main():
     config = {
         'model': 'null_model',       # choose from 'null_model'
-        'dataset': 'car',            # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
+        'dataset': 'car', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
         'mode': 'training',          # choose from 'training', 'inference'
         'cross_validation_splits': 5 # number of experiments 'k' to run k x 2 cross validation
     }

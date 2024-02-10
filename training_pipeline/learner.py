@@ -8,7 +8,7 @@ from training_pipeline import evaluator as __evaluator__
 class Learner:
     def __init__(self, model_meta):
         self.model, self.config = model_meta
-        self.logs = {}
+        self.logs = {'validation_metrics': [], 'learning_metrics': []}
 
     # Hyperparameter tuning
     def hyperparameter_tuning(self, data):
@@ -60,7 +60,7 @@ class Learner:
         best_model = models[metrics_all_experiements.index(max(metrics_all_experiements, key=lambda x: x['accuracy']))]
         self.model = best_model
         print('Training the model...')
-        print(f"Average metrics for trained model: {metrics_averaged: .3f}")
+        print(f"Average metrics for trained model: {metrics_averaged}")
         return None
 
     def export_model(self):
@@ -71,9 +71,9 @@ class Learner:
     def export_logs(self, validation_metrics: None, learning_metrics: None):
         # Export the logs
         if validation_metrics:
-            self.logs['validation_metrics'] = validation_metrics
+            self.logs['validation_metrics'].append(validation_metrics)
         if learning_metrics:
-            self.logs['learning_metrics'] = learning_metrics
+            self.logs['learning_metrics'].append(learning_metrics)
         print('Exporting the logs...')
         return None
 
