@@ -29,7 +29,7 @@ class Pipeline:
         elif dataset == 'breast-cancer-wisconsin':
             directory = os.path.join(root_dir, 'datasets', 'Classification Data Sets', 'Breast Cancer')
         elif dataset == 'house-votes-84':
-            directory = os.path.join(root_dir, 'datasets', 'Classification Data Sets', 'Congressional Voting Records')
+            directory = os.path.join(root_dir, 'datasets', 'Classification Data Sets', 'Congressional Vote')
         elif dataset == 'abalone':
             directory = os.path.join(root_dir, 'datasets', 'Regression Data Sets', 'Abalone')
         elif dataset == 'machine':
@@ -81,7 +81,7 @@ class Pipeline:
 def main():
     config = {
         'model': 'null_model',       # choose from 'null_model'
-        'dataset': 'car', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
+        'dataset': 'house-votes-84', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
         'mode': 'training',          # choose from 'training', 'inference'
         'cross_validation_splits': 5 # number of experiments 'k' to run k x 2 cross validation
     }

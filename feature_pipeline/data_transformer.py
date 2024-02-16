@@ -41,6 +41,12 @@ class DataTransformer:
         # Remove last row if its all empty
         if self.data.iloc[-1].isnull().any():
             self.data = self.data.iloc[:-1]
+        # Move target column to the last column if it is not already
+        target_col_index = self.config.items('target_column')[-1][1]
+        if target_col_index != str(len(self.data.columns) - 1):
+            self.data = self.data[[col for col in self.data.columns if col != int(target_col_index)] + [int(target_col_index)]]
+            # Relabel the column names
+            self.data.columns = range(len(self.data.columns))
         print('Loading the data...')
         return None
     
@@ -54,7 +60,7 @@ class DataTransformer:
         # extract the column indices to remove
         for col in cols_2_remove:
             if col[1] == '1':
-                self.data = self.data.drop(columns=int(col[0]))
+                self.data = self.data.drop(columns=int(col[0])) # column names are preserved
         print('Removing features...')
         return None
 
@@ -94,6 +100,9 @@ class DataTransformer:
         column_encodings = self.config.items('column_encodings')
         # handle all categorical columns in data except target column
         for i, column in column_types[:-1]:
+            # check if column exists in dataframe 
+            if int(i) not in self.data.columns:
+                continue
             # if the column is a categorical ordinal type, encode using integer encoding
             if column == 'categorical ordinal':
                 self.data[int(i)] = self.data[int(i)].replace(eval(column_encodings[int(i)][1]))
@@ -103,11 +112,22 @@ class DataTransformer:
                 self.data = pd.get_dummies(self.data, columns=[int(i)], dtype=float)
         # reorder columns to match the order in the config file only if hot encoding was used
         if  any('categorical nominal' in tuple for tuple in column_types):
-            columns_order = sorted([str(col_name) for col_name in self.data.columns.tolist()])
-            columns_order = [int(col_name) if col_name.isdigit() else col_name for col_name in columns_order]  
-            self.data = self.data[columns_order] 
+            self.reorder_columns()
         print('Handling categorical data...')
         return None
+
+    def reorder_columns(self):
+        column_truncated_names = [str(col_name).split('_') for col_name in self.data.columns.tolist()]
+        column_left_names = [int(col_name[0]) for col_name in column_truncated_names]
+        column_right_names = ['_' + col_name[1] if len(col_name) == 2 else '' for col_name in column_truncated_names]
+        # zip the two lists together and sort by values in the first list
+        sorted_pairs = sorted(zip(column_left_names, column_right_names))
+        # unzip the sorted pairs back into two lists
+        column_left_names, column_right_names = zip(*sorted_pairs)
+        # combine the two lists back into a list of strings
+        column_names = [str(left) + right for left, right in zip(column_left_names, column_right_names)]
+        column_names[-1] = int(column_names[-1]) # convert last column name to int
+        self.data = self.data[column_names] 
 
     # convert continuous data to discrete data
     def discretize_data(self):
@@ -117,6 +137,9 @@ class DataTransformer:
         for discretize_section, column_section in zip(discretize_types[:-1], column_types[:-1]):
             col, discretize_type = discretize_section
             _, column_type = column_section
+            # check if column exists in dataframe 
+            if int(col) not in self.data.columns:
+                continue
             # if column has no discretization type or is categorical, skip
             if len(discretize_type) == 0 or column_type.split()[0] == 'categorical':
                 continue
