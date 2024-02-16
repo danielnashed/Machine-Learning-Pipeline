@@ -3,6 +3,7 @@ import numpy as np
 import csv
 import os
 import configparser
+import copy
 
 # input is raw data 
 # output is processed data split into train, validation, test sets
@@ -213,8 +214,8 @@ class DataTransformer:
         two_halves_data = self.split_into_k_folds(train_data)
         train_validation_data = []
         for k in range(self.splits):
-            train_validation_data.append([two_halves_data[k][0], validation_data])
-            train_validation_data.append([two_halves_data[k][1], validation_data])
+            train_validation_data.append([two_halves_data[k][0], copy.deepcopy(validation_data)])
+            train_validation_data.append([two_halves_data[k][1], copy.deepcopy(validation_data)])
         print('Getting data for hyperparameter tuning...')
         return train_validation_data
 
@@ -254,6 +255,9 @@ class DataTransformer:
                     train_data_std = train_data[int(col)].std()
                     train_data[int(col)] = (train_data[int(col)] - train_data_mean) / train_data_std
                     test_data[int(col)] = (test_data[int(col)] - train_data_mean) / train_data_std
+                elif transform_type == 'log':
+                    train_data[int(col)] = np.log(train_data[int(col)] + 1)
+                    test_data[int(col)] = np.log(test_data[int(col)] + 1)
                 train_test_transformed_data_inner.append([train_data, test_data])
             train_test_transformed_data_outer = train_test_transformed_data_inner
         print('Transforming the data...')

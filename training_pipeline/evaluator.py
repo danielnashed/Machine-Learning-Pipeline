@@ -13,7 +13,7 @@ class Evaluator:
             self.classification_metrics(labels, predictions)
         elif self.prediction_type == 'regression':
             self.regression_metrics(labels, predictions)
-        print('Evaluating the model...')
+        #print('Evaluating the model...')
         return self.metrics
     
 

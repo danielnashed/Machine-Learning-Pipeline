@@ -80,8 +80,8 @@ class Pipeline:
 
 def main():
     config = {
-        'model': 'null_model',       # choose from 'null_model'
-        'dataset': 'abalone', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
+        'model': 'knn',       # choose from 'null_model', 'knn'
+        'dataset': 'forestfires', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
         'mode': 'training',          # choose from 'training', 'inference'
         'cross_validation_splits': 5 # number of experiments 'k' to run k x 2 cross validation
     }
