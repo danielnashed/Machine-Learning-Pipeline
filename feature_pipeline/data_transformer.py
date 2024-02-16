@@ -41,6 +41,11 @@ class DataTransformer:
         # Remove last row if its all empty
         if self.data.iloc[-1].isnull().any():
             self.data = self.data.iloc[:-1]
+        # Remove header row if it exists
+        column_names = self.config.items('column_names')
+        column_names = [line[1] for line in column_names]
+        if self.data.iloc[0].values.tolist() == column_names:
+            self.data = self.data.iloc[1:]
         # Move target column to the last column if it is not already
         target_col_index = self.config.items('target_column')[-1][1]
         if target_col_index != str(len(self.data.columns) - 1):
@@ -68,7 +73,7 @@ class DataTransformer:
     def handle_missing_data(self):
         column_types = self.config.items('column_types')
         missing_values = self.config.items('missing_values')
-        missing_values = [line[1] for line in missing_values]
+        missing_values = [line[1] for line in missing_values if line[1] != '']
         for column, column_type in column_types:
             # check if column exists in dataframe 
             if int(column) not in self.data.columns:
@@ -84,7 +89,7 @@ class DataTransformer:
             elif column_type.strip() == 'numerical':
                 if len(missing_values) != 0:
                     self.data[int(column)] = self.data[int(column)].replace(missing_values, np.nan)
-                    self.data[int(column)] = pd.to_numeric(self.data[int(column)])
+                self.data[int(column)] = pd.to_numeric(self.data[int(column)])
                 self.data[int(column)] = self.data[int(column)].fillna(self.data[int(column)].mean())
         print('Handling missing data...')
         return None
@@ -98,8 +103,9 @@ class DataTransformer:
     def handle_categorical_data(self):
         column_types = self.config.items('column_types')
         column_encodings = self.config.items('column_encodings')
+        target_column_index = int(self.config.items('target_column')[-1][1])
         # handle all categorical columns in data except target column
-        for i, column in column_types[:-1]:
+        for i, column in column_types[:(target_column_index - len(column_types))]:
             # check if column exists in dataframe 
             if int(i) not in self.data.columns:
                 continue
@@ -134,8 +140,10 @@ class DataTransformer:
     def discretize_data(self):
         discretize_types = self.config.items('discretization')
         column_types = self.config.items('column_types')
+        target_column_index = int(self.config.items('target_column')[-1][1])
+        last_feature_index = target_column_index - len(column_types)
         # handle all columns in data except target column
-        for discretize_section, column_section in zip(discretize_types[:-1], column_types[:-1]):
+        for discretize_section, column_section in zip(discretize_types[:last_feature_index], column_types[:last_feature_index]):
             col, discretize_type = discretize_section
             _, column_type = column_section
             # check if column exists in dataframe 
@@ -177,7 +185,8 @@ class DataTransformer:
 
     # Split the data into train and validation sets
     def split_data(self):
-        target_class_type = self.config.items('column_types')[-1][1]
+        target_column_index = int(self.config.items('target_column')[-1][1])
+        target_class_type = self.config.items('column_types')[target_column_index][1]
         if target_class_type.split()[0] == 'categorical':
             self.data = self.stratify_split(self.data, train_frac = 0.8)
         else:
@@ -188,7 +197,8 @@ class DataTransformer:
     # split the data into train and test data with stratification
     def split_into_k_folds(self, data):
         k_folds = []
-        target_class_type = self.config.items('column_types')[-1][1]
+        target_column_index = int(self.config.items('target_column')[-1][1])
+        target_class_type = self.config.items('column_types')[target_column_index][1]
         if target_class_type.split()[0] == 'categorical':
             for k in range(self.splits):
                 k_folds.append(self.stratify_split(data, train_frac = 0.5))
@@ -229,9 +239,7 @@ class DataTransformer:
             # if column has no transformation type or is categorical type, skip
             if len(transform_type) == 0 or column_type.split()[0] == 'categorical':
                 continue
-            #train_data_all, test_data_all = train_test_transformed_data_outer
             train_test_transformed_data_inner = []
-            #for train_data, test_data in zip(train_data_all, test_data_all):
             for fold in train_test_transformed_data_outer:
                 train_data, test_data = fold
                 # for normalization, scale the data to be between 0 and 1

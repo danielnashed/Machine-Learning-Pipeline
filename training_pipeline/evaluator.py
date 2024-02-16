@@ -106,18 +106,18 @@ class Evaluator:
     
     def compute_r2(self, labels, predictions):
         mean = sum(labels) / len(labels)
-        ss_residual = sum([(label - prediction)**2 for label, prediction in zip(labels, predictions)])
+        ss_residual = sum([(label - prediction)**2 for label, prediction in zip(labels, predictions.iloc[:, 0].values)])
         ss_total = sum([(label - mean)**2 for label in labels])
         return 1 - (ss_residual / ss_total)
     
     def compute_mse(self, labels, predictions):
-        return sum([(label - prediction)**2 for label, prediction in zip(labels, predictions)]) / len(labels)
+        return sum([(label - prediction)**2 for label, prediction in zip(labels, predictions.iloc[:, 0].values)]) / len(labels)
 
     def compute_mae(self, labels, predictions):
-        return sum([abs(label - prediction) for label, prediction in zip(labels, predictions)]) / len(labels)
+        return sum([abs(label - prediction) for label, prediction in zip(labels, predictions.iloc[:, 0].values)]) / len(labels)
 
     def compute_rmse(self, labels, predictions):
-        return (sum([(label - prediction)**2 for label, prediction in zip(labels, predictions)]) / len(labels))**0.5
+        return (sum([(label - prediction)**2 for label, prediction in zip(labels, predictions.iloc[:, 0].values)]) / len(labels))**0.5
 
     # calculate regression metrics
     def regression_metrics(self, labels, predictions):
