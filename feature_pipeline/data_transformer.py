@@ -126,7 +126,8 @@ class DataTransformer:
         column_left_names, column_right_names = zip(*sorted_pairs)
         # combine the two lists back into a list of strings
         column_names = [str(left) + right for left, right in zip(column_left_names, column_right_names)]
-        column_names[-1] = int(column_names[-1]) # convert last column name to int
+        # convert names of numerical columns from string to int
+        column_names = [int(col) if col.isnumeric() else col for col in column_names]
         self.data = self.data[column_names] 
 
     # convert continuous data to discrete data
@@ -153,30 +154,47 @@ class DataTransformer:
         ## NEED MORE TESTING FOR FREQUENCY DISCRETIZATION
         return None
     
+    def random_split(self, data, train_frac):
+        train_data = data.sample(frac=train_frac)
+        validation_data = data.drop(train_data.index)
+        return [train_data, validation_data]
+    
+    def stratify_split(self, data, train_frac):
+        # get class label distribution from config file
+        class_label_distribution = self.config.items('class_distribution')
+        train_data = pd.DataFrame()
+        validation_data = pd.DataFrame()
+        for class_label, _ in class_label_distribution:
+            class_data = data[data.iloc[:, -1].astype('str') == class_label] # get all rows with class label
+            train_class_data = class_data.sample(frac=train_frac) # frac of class data goes to train
+            validation_class_data = class_data.drop(train_class_data.index) # remaining (1-frac) goes to validation
+            train_data = pd.concat([train_data, train_class_data]) # add train data to train set
+            validation_data = pd.concat([validation_data, validation_class_data]) # add validation data to validation set
+        # shuffle the data to ensure randomness in order in which target classes appear
+        train_data = train_data.sample(frac=1).reset_index(drop=True)
+        validation_data = validation_data.sample(frac=1).reset_index(drop=True)
+        return [train_data, validation_data]
+
     # Split the data into train and validation sets
     def split_data(self):
-        train_data = self.data.sample(frac=0.8, random_state=42)
-        validation_data = self.data.drop(train_data.index)
-        self.data = [train_data, validation_data]
+        target_class_type = self.config.items('column_types')[-1][1]
+        if target_class_type.split()[0] == 'categorical':
+            self.data = self.stratify_split(self.data, train_frac = 0.8)
+        else:
+            self.data = self.random_split(self.data, train_frac = 0.8)
         print('Splitting the data...')
-        # must return x, y for train, validation, test sets
         return None
 
     # split the data into train and test data with stratification
     def split_into_k_folds(self, data):
-        # get class label distribution from config file
-        class_label_distribution = self.config.items('class_distribution')
         k_folds = []
-        for k in range(self.splits):
-            train_data = pd.DataFrame()
-            test_data = pd.DataFrame()
-            for class_label, _ in class_label_distribution:
-                class_data = data[data.iloc[:, -1].astype('str') == class_label] # get all rows with class label
-                train_class_data = class_data.sample(frac=0.5, random_state=42) # 50% of class data goes to train
-                test_class_data = class_data.drop(train_class_data.index) # remaining 50% goes to test
-                train_data = pd.concat([train_data, train_class_data]) # add train data to train set
-                test_data = pd.concat([test_data, test_class_data]) # add test data to test set
-            k_folds.append([train_data, test_data])
+        target_class_type = self.config.items('column_types')[-1][1]
+        if target_class_type.split()[0] == 'categorical':
+            for k in range(self.splits):
+                k_folds.append(self.stratify_split(data, train_frac = 0.5))
+        else:
+            for k in range(self.splits):
+                k_folds.append(self.random_split(data, train_frac = 0.5))
         print('Splitting into k folds...')
         return k_folds
     
@@ -211,18 +229,19 @@ class DataTransformer:
             # if column has no transformation type or is categorical type, skip
             if len(transform_type) == 0 or column_type.split()[0] == 'categorical':
                 continue
-            # train_data_all, test_data_all = train_test_data
-            train_data_all, test_data_all = train_test_transformed_data_outer
+            #train_data_all, test_data_all = train_test_transformed_data_outer
             train_test_transformed_data_inner = []
-            for train_data, test_data in zip(train_data_all, test_data_all):
+            #for train_data, test_data in zip(train_data_all, test_data_all):
+            for fold in train_test_transformed_data_outer:
+                train_data, test_data = fold
                 # for normalization, scale the data to be between 0 and 1
-                if list(eval(transform_type).keys())[0] == 'normalization':
+                if transform_type == 'normalization':
                     train_data_min = train_data[int(col)].min()
                     train_data_max = train_data[int(col)].max()
                     train_data[int(col)] = (train_data[int(col)] - train_data_min) / (train_data_max - train_data_min)
                     test_data[int(col)] = (test_data[int(col)] - train_data_min) / (train_data_max - train_data_min)
                 # for standardization, scale the data to have mean 0 and standard deviation 1
-                elif list(eval(transform_type).keys())[0] == 'standardization':
+                elif transform_type == 'standardization':
                     train_data_mean = train_data[int(col)].mean()
                     train_data_std = train_data[int(col)].std()
                     train_data[int(col)] = (train_data[int(col)] - train_data_mean) / train_data_std

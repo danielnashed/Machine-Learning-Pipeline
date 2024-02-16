@@ -9,6 +9,15 @@ class Learner:
     def __init__(self, model_meta):
         self.model, self.config = model_meta
         self.logs = {'validation_metrics': [], 'learning_metrics': []}
+        self.favorite_metric = self.get_favorite_metric()
+    
+    def get_favorite_metric(self):
+        metrics = self.config.items('metric_for_model_selection')
+        for key, value in metrics:
+            if value == '1':
+                favorite_metric = key
+                break
+        return favorite_metric
 
     # Hyperparameter tuning
     def hyperparameter_tuning(self, data):
@@ -29,7 +38,7 @@ class Learner:
                 metrics_all_experiements.append(evaluator.evaluate(y_validation, y_validation_pred))
             metrics_averaged = self.get_average(metrics_all_experiements)
             metrics_all_models.append((dict(zip(parameters, combination)), metrics_averaged))
-        best_model = max(metrics_all_models, key=lambda x: x[1]['accuracy'])
+        best_model = max(metrics_all_models, key=lambda x: x[1][self.favorite_metric])
         self.model.set_params(best_model[0])
         # validation curve: should produce logs of model metric as function of hyperparameter
         self.export_logs(validation_metrics = metrics_all_models, learning_metrics = None)
@@ -57,7 +66,7 @@ class Learner:
             y_test_pred = self.model.predict(X_test)
             metrics_all_experiements.append(evaluator.evaluate(y_test, y_test_pred))
         metrics_averaged = self.get_average(metrics_all_experiements)
-        best_model = models[metrics_all_experiements.index(max(metrics_all_experiements, key=lambda x: x['accuracy']))]
+        best_model = models[metrics_all_experiements.index(max(metrics_all_experiements, key=lambda x: x[self.favorite_metric]))]
         self.model = best_model
         print('Training the model...')
         print(f"Average metrics for trained model: {metrics_averaged}")
