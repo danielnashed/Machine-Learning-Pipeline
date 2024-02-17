@@ -1,5 +1,5 @@
 # EN.605.611 - Introduction to Machine Learning
-## Author: Daniel Nashed
+### Author: Daniel Nashed
 
 ## Package Description
 This package is an end-to-end machine learing pipeline to be used to develop, train and run inference of machine learning models.
@@ -11,37 +11,47 @@ This package is an end-to-end machine learing pipeline to be used to develop, tr
  ┣ 📂datasets --> contains the Waymo Open Dataset sequences <br>
  ┃ ┃ <br>
  ┃ ┣ 📂Classification Data Sets<br>
+ ┃ ┃ ┃ <br>
  ┃ ┃ ┣ 📂Breast Cancer<br>
- ┃ ┃ ┃ ┣ breast-cancer-wisconsin.config<br>
+ ┃ ┃ ┃ ┣ breast-cancer-wisconsin.config<br> 
  ┃ ┃ ┃ ┣ breast-cancer-wisconsin.names<br>
  ┃ ┃ ┃ ┗ breast-cancer-wisconsin.data<br>
+ ┃ ┃ ┃ <br>
  ┃ ┃ ┣ 📂Car Evaluation<br>
  ┃ ┃ ┃ ┣ car.config<br>
  ┃ ┃ ┃ ┣ car.names<br>
  ┃ ┃ ┃ ┗ car.data<br>
+ ┃ ┃ ┃ <br>
  ┃ ┃ ┗ 📂Congressional Vote<br>
  ┃ ┃   ┣ house-votes-84.config<br>
  ┃ ┃   ┣ house-votes-84.names<br>
  ┃ ┃   ┗ house-votes-84.data<br>
+ ┃ ┃ <br>
  ┃ ┣ 📂Regression Data Sets<br>
+ ┃ ┃ ┃ <br>
  ┃ ┃ ┣ 📂Abalone<br>
  ┃ ┃ ┃ ┣ abalone.config<br>
  ┃ ┃ ┃ ┣ abalone.names<br>
  ┃ ┃ ┃ ┗ abalone.data<br>
+ ┃ ┃ ┃ <br>
  ┃ ┃ ┣ 📂Computer Hardware<br>
  ┃ ┃ ┃ ┣ machine.config<br>
  ┃ ┃ ┃ ┣ machine.names<br>
  ┃ ┃ ┃ ┗ machine.data<br>
+ ┃ ┃ ┃ <br>
  ┃ ┃ ┗ 📂Forest Fires<br>
  ┃ ┃   ┣ forestfires.config<br>
  ┃ ┃   ┣ forestfires.names<br>
  ┃ ┃   ┗ forestfires.data<br>
+ ┃ ┃ <br>
  ┃ ┣ 📂Reinforcement Learning Data Sets<br>
+ ┃ ┃ ┃ <br>
  ┃ ┃ ┗ 📂Racetracks<br>
  ┃ ┃   ┣ L-track.txt<br>
  ┃ ┃   ┣ O-track.txt<br>
  ┃ ┃   ┣ R-track.txt<br>
  ┃ ┃   ┗ W-track.txt<br>
+ ┃ ┃ <br>
  ┃ ┗ tempelate.config<br>
  ┃<br>
  ┣ 📂misc<br>
