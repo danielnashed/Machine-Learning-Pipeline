@@ -52,7 +52,7 @@ This package is an end-to-end machine learing pipeline to be used to develop, tr
  ┃ ┃ ┃ ┣ R-track.txt --> txt file containing data<br>
  ┃ ┃ ┃ ┗ W-track.txt --> txt file containing data<br>
  ┃ ┃ <br>
- ┃ ┗ tempelate.config<br>
+ ┃ ┗ template.config<br>
  ┃<br>
  ┣ 📂feature_pipeline<br>
  ┃ ┗ data_transformer.py --> class with methods for pre-processing of dataset<br>
@@ -98,10 +98,10 @@ All dependencies required for the project have been listed in the file `requirem
 ### Running the Package
 The entry point is provided in run.py located in the root directory. To run a pipeline, modify the config dictionary inside the main method as follows:
 
-- 'model': # choose from 'null_model', 'knn', 'edited_knn'
-- 'dataset': # choose from 'car', 'breast-cancer-wisconsin' 'house-votes-84', 'abalone',  'machine', 'forestfires', 'racetracks'
-- 'mode': # choose from 'training', 'inference'
-- 'cross_validation_splits': # number of experiments 'k' to run k x 2 cross validation
+- 'model': choose from 'null_model', 'knn', 'edited_knn'
+- 'dataset': choose from 'car', 'breast-cancer-wisconsin' 'house-votes-84', 'abalone',  'machine', 'forestfires', 'racetracks'
+- 'mode': choose from 'training', 'inference'
+- 'cross_validation_splits': number of experiments 'k' to run k x 2 cross validation
 
 ### Outputs
 Each time a pipeline is executed, a new subdirectory is created inside 'outputs' directory to hold all exported data pertaining to an executed pipeline. The following files are exported during pipeline execution:
