@@ -8,91 +8,81 @@ This package is an end-to-end machine learing pipeline to be used to develop, tr
 
 📦Projets<br>
  ┃ <br>
- ┣ 📂datasets --> contains the Waymo Open Dataset sequences <br>
+ ┣ 📂datasets<br>
  ┃ ┃ <br>
  ┃ ┣ 📂Classification Data Sets<br>
  ┃ ┃ ┃ <br>
  ┃ ┃ ┣ 📂Breast Cancer<br>
- ┃ ┃ ┃ ┣ breast-cancer-wisconsin.config<br> 
- ┃ ┃ ┃ ┣ breast-cancer-wisconsin.names<br>
- ┃ ┃ ┃ ┗ breast-cancer-wisconsin.data<br>
+ ┃ ┃ ┃ ┣ breast-cancer-wisconsin.config --> structured INI file for processing dataset<br> 
+ ┃ ┃ ┃ ┣ breast-cancer-wisconsin.names --> unstructured txt file with dataset description<br>
+ ┃ ┃ ┃ ┗ breast-cancer-wisconsin.data --> txt file containing data<br>
  ┃ ┃ ┃ <br>
  ┃ ┃ ┣ 📂Car Evaluation<br>
- ┃ ┃ ┃ ┣ car.config<br>
- ┃ ┃ ┃ ┣ car.names<br>
- ┃ ┃ ┃ ┗ car.data<br>
+ ┃ ┃ ┃ ┣ car.config --> structured INI file for processing dataset<br> 
+ ┃ ┃ ┃ ┣ car.names --> unstructured txt file with dataset description<br>
+ ┃ ┃ ┃ ┗ car.data --> txt file containing data<br>
  ┃ ┃ ┃ <br>
  ┃ ┃ ┗ 📂Congressional Vote<br>
- ┃ ┃   ┣ house-votes-84.config<br>
- ┃ ┃   ┣ house-votes-84.names<br>
- ┃ ┃   ┗ house-votes-84.data<br>
+ ┃ ┃ ┃ ┣ house-votes-84.config --> structured INI file for processing dataset<br> 
+ ┃ ┃ ┃ ┣ house-votes-84.names --> unstructured txt file with dataset description<br>
+ ┃ ┃ ┃ ┗ house-votes-84.data --> txt file containing data<br>
  ┃ ┃ <br>
  ┃ ┣ 📂Regression Data Sets<br>
  ┃ ┃ ┃ <br>
  ┃ ┃ ┣ 📂Abalone<br>
- ┃ ┃ ┃ ┣ abalone.config<br>
- ┃ ┃ ┃ ┣ abalone.names<br>
- ┃ ┃ ┃ ┗ abalone.data<br>
+ ┃ ┃ ┃ ┣ abalone.config  --> structured INI file for processing dataset<br>
+ ┃ ┃ ┃ ┣ abalone.names --> unstructured txt file with dataset description<br>
+ ┃ ┃ ┃ ┗ abalone.data --> txt file containing data<br>
  ┃ ┃ ┃ <br>
  ┃ ┃ ┣ 📂Computer Hardware<br>
- ┃ ┃ ┃ ┣ machine.config<br>
- ┃ ┃ ┃ ┣ machine.names<br>
- ┃ ┃ ┃ ┗ machine.data<br>
+ ┃ ┃ ┃ ┣ machine.config --> structured INI file for processing dataset<br> 
+ ┃ ┃ ┃ ┣ machine.names --> unstructured txt file with dataset description<br>
+ ┃ ┃ ┃ ┗ machine.data --> txt file containing data<br>
  ┃ ┃ ┃ <br>
  ┃ ┃ ┗ 📂Forest Fires<br>
- ┃ ┃   ┣ forestfires.config<br>
- ┃ ┃   ┣ forestfires.names<br>
- ┃ ┃   ┗ forestfires.data<br>
- ┃ ┃ <br>
+ ┃ ┃ ┃ ┣ forestfires.config --> structured INI file for processing dataset<br> 
+ ┃ ┃ ┃ ┣ forestfires.names --> unstructured txt file with dataset description<br>
+ ┃ ┃ ┃ ┗ forestfires.data --> txt file containing data<br>
+ ┃ ┃ ┃ <br>
  ┃ ┣ 📂Reinforcement Learning Data Sets<br>
  ┃ ┃ ┃ <br>
  ┃ ┃ ┗ 📂Racetracks<br>
- ┃ ┃   ┣ L-track.txt<br>
- ┃ ┃   ┣ O-track.txt<br>
- ┃ ┃   ┣ R-track.txt<br>
- ┃ ┃   ┗ W-track.txt<br>
+ ┃ ┃ ┃ ┣ L-track.txt --> txt file containing data<br>
+ ┃ ┃ ┃ ┣ O-track.txt --> txt file containing data<br>
+ ┃ ┃ ┃ ┣ R-track.txt --> txt file containing data<br>
+ ┃ ┃ ┃ ┗ W-track.txt --> txt file containing data<br>
  ┃ ┃ <br>
  ┃ ┗ tempelate.config<br>
  ┃<br>
- ┣ 📂misc<br>
- ┃ ┣ evaluation.py --> plot functions for tracking visualization and RMSE calculation<br>
- ┃ ┣ helpers.py --> misc. helper functions, e.g. for loading / saving binary files<br>
- ┃ ┗ objdet_tools.py --> object detection functions without student tasks<br>
- ┃ ┗ params.py --> parameter file for the tracking part<br>
+ ┣ 📂feature_pipeline<br>
+ ┃ ┗ data_transformer.py --> class with methods for pre-processing of dataset<br>
  ┃ <br>
- ┣ 📂results --> binary files with pre-computed intermediate results<br>
+ ┣ 📂training_pipeline<br>
+ ┃ ┣ learner.py --> class with methods to train an ml model<br>
+ ┃ ┣ evaluator.py --> class with methods to evaluate model performance<br>
+ ┃ ┗ dashboard.py --> class with methods to display evaluation metrics<br>
  ┃ <br>
- ┣ 📂student <br>
- ┃ ┣ association.py --> data association logic for assigning measurements to tracks incl. student tasks <br>
- ┃ ┣ filter.py --> extended Kalman filter implementation incl. student tasks <br>
- ┃ ┣ measurements.py --> sensor and measurement classes for camera and lidar incl. student tasks <br>
- ┃ ┣ objdet_detect.py --> model-based object detection incl. student tasks <br>
- ┃ ┣ objdet_eval.py --> performance assessment for object detection incl. student tasks <br>
- ┃ ┣ objdet_pcl.py --> point-cloud functions, e.g. for birds-eye view incl. student tasks <br>
- ┃ ┗ trackmanagement.py --> track and track management classes incl. student tasks  <br>
- ┃ <br>
- ┣ 📂tools --> external tools<br>
- ┃ ┣ 📂objdet_models --> models for object detection<br>
+ ┣ 📂inference_pipeline <br>
+ ┃ ┃ <br>
+ ┃ ┣ model.py --> abstract class interface to represent an ml model<br>
+ ┃ ┃ <br>
+ ┃ ┣ 📂null_model --> baseline model using mean or mode of target class<br>
+ ┃ ┃ ┣ null_model.py --> class and methods to model a null model<br>
+ ┃ ┃ ┗ null_model.config --> structured INI file to configure model<br>
+ ┃ ┃ <br>
+ ┃ ┣ 📂knn --> k-nearest neighbour model<br>
+ ┃ ┃ ┣ knn.py --> class and methods to model a knn model<br>
+ ┃ ┃ ┗ knn.config --> structured INI file to configure model<br>
+ ┃ ┃ <br>
+ ┃ ┣ 📂edited_knn --> edited k-nearest neighbour model to improve inference time<br>
+ ┃ ┃ ┣ edited_knn.py --> class and methods to model a knn model<br>
+ ┃ ┃ ┗ edited_knn.config --> structured INI file to configure model<<br>
+ ┃ ┃ <br>
+ ┣ 📂output --> directory to hold outputs of pipelines<br>
  ┃ ┃ ┃<br>
- ┃ ┃ ┣ 📂darknet<br>
- ┃ ┃ ┃ ┣ 📂config<br>
- ┃ ┃ ┃ ┣ 📂models --> darknet / yolo model class and tools<br>
- ┃ ┃ ┃ ┣ 📂pretrained --> copy pre-trained model file here<br>
- ┃ ┃ ┃ ┃ ┗ complex_yolov4_mse_loss.pth<br>
- ┃ ┃ ┃ ┣ 📂utils --> various helper functions<br>
- ┃ ┃ ┃<br>
- ┃ ┃ ┗ 📂resnet<br>
- ┃ ┃ ┃ ┣ 📂models --> fpn_resnet model class and tools<br>
- ┃ ┃ ┃ ┣ 📂pretrained --> copy pre-trained model file here <br>
- ┃ ┃ ┃ ┃ ┗ fpn_resnet_18_epoch_300.pth <br>
- ┃ ┃ ┃ ┣ 📂utils --> various helper functions<br>
- ┃ ┃ ┃<br>
- ┃ ┗ 📂waymo_reader --> functions for light-weight loading of Waymo sequences<br>
+ ┃ ┣ run.py --> entry point for package pipeline<br>
+ ┃ ┗ README.md<br>
  ┃<br>
- ┣ basic_loop.py<br>
- ┣ loop_over_dataset.py<br>
-
-
 
 ## Installation Instructions for Running Locally
 ### Cloning the Project
