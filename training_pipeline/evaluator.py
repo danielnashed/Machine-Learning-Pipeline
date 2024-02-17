@@ -1,5 +1,11 @@
-# input is predictions and labels
-# output is evaluation metrics
+
+# [description] this class is responsible for evaluating the model using the evaluation metrics 
+# specified in the config file and comparing the predictions to the labels. It uses classification metrics
+# for binary classification and multiclass classification and regression metrics for regression.
+#
+# [input] is predictions and labels
+# [output] is evaluation metrics
+#
 class Evaluator:
     def __init__(self, model, config):
         self.config = config # config file for model contains what metrics to use for evaluation
@@ -13,10 +19,9 @@ class Evaluator:
             self.classification_metrics(labels, predictions)
         elif self.prediction_type == 'regression':
             self.regression_metrics(labels, predictions)
-        #print('Evaluating the model...')
         return self.metrics
     
-
+    # Count the number of true positives, false positives, true negatives, and false negatives
     def count_positives_negatives(self, labels, predictions):
         TP = 0
         FP = 0
@@ -24,34 +29,29 @@ class Evaluator:
         FN = 0
         # convert all values to strings for comparison. positive class is also a string.
         for i in range(len(labels)):
+            # if the prediction is the positive class and the label is the positive class
             if str(predictions.iloc[i,0]) == str(labels.iloc[i]) and str(labels.iloc[i]) == self.positive_class:
                 TP += 1
+            # if the prediction is the positive class and the label is not the positive class
             elif str(predictions.iloc[i,0]) == self.positive_class and str(labels.iloc[i]) != self.positive_class:
                 FP += 1
+            # if the prediction is not the positive class and the label is not the positive class
             elif str(predictions.iloc[i,0]) != self.positive_class and str(labels.iloc[i]) != self.positive_class:
                 TN += 1
+            # if the prediction is not the positive class and the label is the positive class
             elif str(predictions.iloc[i,0]) != self.positive_class and str(labels.iloc[i]) == self.positive_class:
                 FN += 1
         return TP, FP, TN, FN
 
-    # need to modify to handle multiclass classification
+    # Compute the confusion matrix
     def compute_confusion_matrix(self, labels, predictions):
         # if binary classification, then use positive class
         if self.positive_class != '':
             TP, FP, TN, FN = self.count_positives_negatives(labels, predictions)
-            #confusion_matrix = [[TP, FP], [FN, TN]]
-        # if multiclass classification, then use all classes
+        # if multiclass classification, then use one class versus all other classes
         else:
             # get unique classes from labels
             classes = sorted(set(labels))
-            # encode classes as integers to use as indices in confusion matrix
-            #class_to_index = {c: i for i, c in enumerate(classes)}
-            # convert labels, predictions, and classes to integers
-            #labels = [class_to_index[label] for label in labels]
-            #predictions = [class_to_index[prediction] for prediction in predictions]
-            #classes = [class_to_index[c] for c in classes]
-            # initialize confusion matrix with zeros with size NxN where N is the number of classes
-            #confusion_matrix = [[0 for _ in classes] for _ in classes]
             # initialize counters for TP, TN, FP, FN
             TP = {c: 0 for c in classes}
             TN = {c: 0 for c in classes}
@@ -59,7 +59,6 @@ class Evaluator:
             FN = {c: 0 for c in classes}
             # calculate the confusion matrix and TP, TN, FP, FN for each class
             for label, prediction in zip(labels, predictions.iloc[:, 0].values):
-                #confusion_matrix[label][prediction] += 1
                 for c in classes:
                     # case where label is positive class
                     if label == c:
@@ -84,8 +83,7 @@ class Evaluator:
             FN = sum(FN.values()) / len(classes)
         return TP, FP, TN, FN
     
-
-    # calculate classification metrics
+    # Calculate classification metrics
     def classification_metrics(self, labels, predictions):
         target_metrics = dict(self.config.items('evaluation_metrics'))
         TP, FP, TN, FN = self.compute_confusion_matrix(labels, predictions)
@@ -103,23 +101,28 @@ class Evaluator:
             f1 = 2 * (precision * recall) / (precision + recall)
             metrics['f1'] = f1
         self.metrics = metrics
+        return None
     
+    # Calculate the r2 metric for regression
     def compute_r2(self, labels, predictions):
         mean = sum(labels) / len(labels)
         ss_residual = sum([(label - prediction)**2 for label, prediction in zip(labels, predictions.iloc[:, 0].values)])
         ss_total = sum([(label - mean)**2 for label in labels])
         return 1 - (ss_residual / ss_total)
     
+    # Calculate mean squared error for regression
     def compute_mse(self, labels, predictions):
         return sum([(label - prediction)**2 for label, prediction in zip(labels, predictions.iloc[:, 0].values)]) / len(labels)
 
+    # Calculate mean absolute error for regression
     def compute_mae(self, labels, predictions):
         return sum([abs(label - prediction) for label, prediction in zip(labels, predictions.iloc[:, 0].values)]) / len(labels)
 
+    # Calculate root mean squared error for regression
     def compute_rmse(self, labels, predictions):
         return (sum([(label - prediction)**2 for label, prediction in zip(labels, predictions.iloc[:, 0].values)]) / len(labels))**0.5
 
-    # calculate regression metrics
+    # Calculate regression metrics
     def regression_metrics(self, labels, predictions):
         target_metrics = dict(self.config.items('evaluation_metrics'))
         metrics = {}
@@ -136,4 +139,5 @@ class Evaluator:
             rmse = self.compute_rmse(labels, predictions)
             metrics['rmse'] = rmse
         self.metrics = metrics
+        return None
     

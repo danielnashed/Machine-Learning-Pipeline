@@ -1,12 +1,16 @@
 import matplotlib.pyplot as plt
 import os
 
-# input is evaluation metrics
-# output is dashboard visuals
+# [description] this class is responsible for visualizing the model's performance using learning curve and
+# validation curve. It exports the dashboard as a .png file.
+#
+# [input] is model name, dataset name, cross validation splits, and output directory
+# [output] is dashboard visuals
 class Dashboard:
     def __init__(self, config):
         self.model, self.data, self.splits, self.output = self.process_config(config)
 
+    # Process the config dictionary
     def process_config(self, config):
         # Extract model name from the model path
         model_name = os.path.basename(os.path.normpath(config.model))
@@ -18,26 +22,29 @@ class Dashboard:
         output_directory = config.output
         return (model_name, dataset_name, splits, output_directory)
 
+    # Visualize the model's performance
     def visualize(self, metrics, logs):
-        # Visualize the data
         learning_curve_fig = self.plot_learning_curve(logs['learning_metrics'])
         validation_curve_fig = self.plot_validation_curve(logs['validation_metrics'])
         self.export_dashboard(learning_curve_fig, validation_curve_fig)
+        return None
     
-    # Plot the learning curve
+    # Plot the learning curve (TO BE IMPLEMENTED LATER IN PROJECT 2)   
     def plot_learning_curve(self, learning_metrics):
+        print('Plotting the learning curve...')
         # Create a figure and axis
         fig, ax = plt.subplots(dpi = 300)
-        ax.set_title('Learning Curve', fontsize=10)
+        ax.set_title('Learning Curve (TO BE IMPLEMENTED LATER IN PROJECT 2)', fontsize=10)
         ax.set_xlabel('Percent of Training Data Used')
         ax.set_ylabel('Model Metric(s)')
         plt.grid()
         plt.tight_layout()
-        print('Plotting the learning curve...')
+        plt.show()
         return fig
     
     # Plot the validation curve
     def plot_validation_curve(self, validation_metrics):
+        print('Plotting the validation curve...')
         # Create a figure and axis
         fig, ax = plt.subplots(dpi = 300)
         plt.grid()
@@ -65,17 +72,15 @@ class Dashboard:
         plt.xticks(range(x), x_labels, rotation=90)
         plt.tight_layout()
         plt.show()
-        print('Plotting the validation curve...')
         return fig
 
-    # Export the dashboard
+    # Export the dashboard as a .png file
     def export_dashboard(self, learning_curve_fig, validation_curve_fig):
-        # Save the figures
+        print('Exporting the dashboard...')
         learning_curve_name = self.model + ' learning curve with ' + self.data + 'dataset using k_x_' + str(self.splits) + ' cross validation.png'
         validation_curve_name = self.model + ' validation curve with ' + self.data + 'dataset using k_x_' + str(self.splits) + ' cross validation.png'
         learning_curve_fullpath = os.path.join(self.output, learning_curve_name)
         validation_curve_fullpath = os.path.join(self.output, validation_curve_name)
         learning_curve_fig.savefig(learning_curve_fullpath)
         validation_curve_fig.savefig(validation_curve_fullpath)        
-        print('Exporting the dashboard...')
         return None

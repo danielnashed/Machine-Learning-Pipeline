@@ -7,10 +7,17 @@ from training_pipeline import learner, evaluator, dashboard
 from inference_pipeline import model as model_selector
 
 
+# [description] this is the main class that orchestrates the entire end-to-end pipeline to 
+# train a model or run inference on a model.
+#
+# [input] is config dictionary to specify model, dataset, mode, and cross validation splits
+# [output] is None
+#
 class Pipeline:
     def __init__(self, config):
         self.model, self.data, self.mode, self.splits, self.output = self.load_config(config)
 
+    # Process the config dictionary
     def load_config(self, config):
         model_name = config['model']
         dataset = config['dataset']
@@ -41,12 +48,12 @@ class Pipeline:
             directory = os.path.join(root_dir, 'datasets', 'Reinforcement Learning Data Sets', 'Racetracks')
         data_fullpath = os.path.join(directory, dataset) 
 
-        # Create an output directory 
+        # Create an output directory to store all exported files during pipeline execution
         directory_name = mode + '_' + model_name + '_' + dataset + '_' + str(datetime.now()).replace(' ', '_').replace(':', '-').split('.')[0]
         output_directory = os.path.join(os.getcwd(), 'output', directory_name)
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
-
+            
         return (model_fullpath, data_fullpath, mode, splits, output_directory)
 
     # Build the pipeline
@@ -92,12 +99,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
-
-# 1. Load data
-# 2. Preprocess data
-# 3. Train model
-# 4. Evaluate model
-# 5. Save model
-# 6. Save results
-# 7. Save logs
