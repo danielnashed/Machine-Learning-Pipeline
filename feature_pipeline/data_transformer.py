@@ -9,7 +9,7 @@ import copy
 # input is raw data 
 # output is processed data split into train, validation, test sets
 class DataTransformer:
-    def __init__(self, path, mode, splits):
+    def __init__(self, path, mode, splits, output):
         # config is a path to a dataset directory containing a config file and a data file
         self.config_path = path + '.config'
         self.data_path = path + '.data'
@@ -17,6 +17,7 @@ class DataTransformer:
         self.data = None
         self.mode = mode
         self.splits = splits
+        self.output = output
         self.positive_class = None
 
     def load_config(self):
@@ -305,10 +306,8 @@ class DataTransformer:
     
     # Export the data
     def export_data(self):
-        # get directory 
-        directory_path = os.path.dirname(self.data_path)
-        self.data[0].to_csv(directory_path + '/processed_train_data.csv')
-        self.data[1].to_csv(directory_path + '/processed_validation_data.csv')
+        self.data[0].to_csv(os.path.join(self.output, 'processed_train_data.csv'))
+        self.data[1].to_csv(os.path.join(self.output, 'processed_validation_data.csv'))
         print('Exporting the data...')
         return None
 

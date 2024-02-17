@@ -1,5 +1,6 @@
 import configparser
 import copy
+import os
 from itertools import product
 import pickle
 import time
@@ -8,8 +9,9 @@ from training_pipeline import evaluator as __evaluator__
 # input is processed data and model
 # output is model
 class Learner:
-    def __init__(self, model_meta):
+    def __init__(self, model_meta, output):
         self.model, self.config = model_meta
+        self.output = output
         self.logs = {'validation_metrics': [], 'learning_metrics': []}
         self.favorite_metric = self.get_favorite_metric()
     
@@ -78,13 +80,6 @@ class Learner:
         end_time = time.time()
         print(f"\nAverage metrics for trained model: {metrics_averaged} --- Training time: {end_time - start_time:.2f}s")
 
-    def export_model(self):
-        # Export the model
-        model_name = self.model.__class__.__name__
-        with open(model_name + '.pickle', 'wb') as f:
-            pickle.dump(self.model, f)
-        print('Exporting the model...')
-
     def save_logs(self, validation_metrics: None, learning_metrics: None):
         # Save the logs
         if validation_metrics:
@@ -94,9 +89,16 @@ class Learner:
     
     # Export the logs
     def export_logs(self):
-        with open('logs.pickle', 'wb') as f:
+        with open(os.path.join(self.output, 'logs.pickle'), 'wb') as f:
             pickle.dump(self.logs, f)
         print('Exporting the logs...')
+
+    def export_model(self):
+        # Export the model
+        full_path = os.path.join(self.output, self.model.__class__.__name__ + '.pickle')
+        with open(full_path, 'wb') as f:
+            pickle.dump(self.model, f)
+        print('Exporting the model...')
 
     # Run the learner
     def learn(self, data):

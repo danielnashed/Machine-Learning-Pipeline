@@ -5,7 +5,7 @@ import os
 # output is dashboard visuals
 class Dashboard:
     def __init__(self, config):
-        self.model, self.data, self.splits = self.process_config(config)
+        self.model, self.data, self.splits, self.output = self.process_config(config)
 
     def process_config(self, config):
         # Extract model name from the model path
@@ -14,7 +14,9 @@ class Dashboard:
         dataset_name = os.path.basename(os.path.normpath(config.data))
         # Extract number of cross validation splits
         splits = config.splits
-        return (model_name, dataset_name, splits)
+        # Extract output directory 
+        output_directory = config.output
+        return (model_name, dataset_name, splits, output_directory)
 
     def visualize(self, metrics, logs):
         # Visualize the data
@@ -71,7 +73,9 @@ class Dashboard:
         # Save the figures
         learning_curve_name = self.model + ' learning curve with ' + self.data + 'dataset using k_x_' + str(self.splits) + ' cross validation.png'
         validation_curve_name = self.model + ' validation curve with ' + self.data + 'dataset using k_x_' + str(self.splits) + ' cross validation.png'
-        learning_curve_fig.savefig(learning_curve_name)
-        validation_curve_fig.savefig(validation_curve_name)        
+        learning_curve_fullpath = os.path.join(self.output, learning_curve_name)
+        validation_curve_fullpath = os.path.join(self.output, validation_curve_name)
+        learning_curve_fig.savefig(learning_curve_fullpath)
+        validation_curve_fig.savefig(validation_curve_fullpath)        
         print('Exporting the dashboard...')
         return None
