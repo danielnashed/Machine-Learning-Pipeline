@@ -1,6 +1,8 @@
 import configparser
 import copy
 from itertools import product
+import pickle
+import time
 from training_pipeline import evaluator as __evaluator__
 
 # input is processed data and model
@@ -21,13 +23,14 @@ class Learner:
 
     # Hyperparameter tuning
     def hyperparameter_tuning(self, data):
+        start_time = time.time()
         hyperparameters = self.config.items('hyperparameters')
         metrics_all_models = []
         parameters = [line[0] for line in hyperparameters] # extract names of hyperparameters
         values = [line[1] for line in hyperparameters] # extract values of each hyperparameter
         hyperparameters = list(product(*[eval(parameter) for parameter in values])) # find all possible combinations of hyperparameters
         for i, combination in enumerate(hyperparameters):
-            print(f"Finetuning model hyperparameters: {dict(zip(parameters, combination))}, {i*100/len(hyperparameters)}% complete")
+            print(f"Finetuning model hyperparameters: {dict(zip(parameters, combination))} --- {i*100/len(hyperparameters):.2f}% complete")
             model = self.model
             model.set_params(dict(zip(parameters, combination)))
             evaluator = __evaluator__.Evaluator(self.model, self.config)
@@ -43,9 +46,9 @@ class Learner:
         best_model = max(metrics_all_models, key=lambda x: x[1][self.favorite_metric])
         self.model.set_params(best_model[0])
         # validation curve: should produce logs of model metric as function of hyperparameter
-        self.export_logs(validation_metrics = metrics_all_models, learning_metrics = None)
-        print(f"Best hyperparameters: {best_model[0]}")
-        return None
+        self.save_logs(validation_metrics = metrics_all_models, learning_metrics = None)
+        end_time = time.time()
+        print(f"\nBest hyperparameters: {best_model[0]} --- Hypertuning time: {end_time - start_time:.2f}s")
 
     def get_average(self, metrics_all_experiements):
         metrics_averaged = {}
@@ -55,7 +58,8 @@ class Learner:
     
     # Train the model
     def train_model(self, data):
-        print('Training the model...')
+        start_time = time.time()
+        print('\nTraining the model...')
         evaluator = __evaluator__.Evaluator(self.model, self.config)
         metrics_all_experiements = []
         models = []
@@ -64,33 +68,41 @@ class Learner:
             X_train, y_train, X_test, y_test = experiment
             learning_metrics = self.model.fit(X_train, y_train)
             model = copy.deepcopy(self.model)
-            self.export_logs(validation_metrics = None, learning_metrics = {'model': model, 'learning_metrics': learning_metrics})
+            self.save_logs(validation_metrics = None, learning_metrics = {'model': model, 'learning_metrics': learning_metrics})
             models.append(model) # save the model
             y_test_pred = self.model.predict(X_test)
             metrics_all_experiements.append(evaluator.evaluate(y_test, y_test_pred))
         metrics_averaged = self.get_average(metrics_all_experiements)
         best_model = models[metrics_all_experiements.index(max(metrics_all_experiements, key=lambda x: x[self.favorite_metric]))]
         self.model = best_model
-        print(f"Average metrics for trained model: {metrics_averaged}")
-        return None
+        end_time = time.time()
+        print(f"\nAverage metrics for trained model: {metrics_averaged} --- Training time: {end_time - start_time:.2f}s")
 
     def export_model(self):
         # Export the model
+        model_name = self.model.__class__.__name__
+        with open(model_name + '.pickle', 'wb') as f:
+            pickle.dump(self.model, f)
         print('Exporting the model...')
-        return None
 
-    def export_logs(self, validation_metrics: None, learning_metrics: None):
-        # Export the logs
+    def save_logs(self, validation_metrics: None, learning_metrics: None):
+        # Save the logs
         if validation_metrics:
             self.logs['validation_metrics'].append(validation_metrics)
         if learning_metrics:
             self.logs['learning_metrics'].append(learning_metrics)
-        print('    Exporting the logs...')
-        return None
+    
+    # Export the logs
+    def export_logs(self):
+        with open('logs.pickle', 'wb') as f:
+            pickle.dump(self.logs, f)
+        print('Exporting the logs...')
 
     # Run the learner
     def learn(self, data):
         train_validation_data, train_test_data = data
         self.hyperparameter_tuning(train_validation_data)
         self.train_model(train_test_data)
+        self.export_model()
+        self.export_logs()
         return (self.model, self.logs)

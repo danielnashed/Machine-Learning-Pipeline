@@ -45,37 +45,38 @@ class Pipeline:
     # Build the pipeline
     def _build_pipeline(self):
         # 1. Load data and preprocess it
-        print('\n*** start of data transformation ***\n')
+        print('*** START OF DATA TRANSFORMATION ***\n')
         data, pos_class = data_transformer.DataTransformer(self.data, self.mode, self.splits).process()
-        print('\n*** end of data transformation ***\n')
+        print('\n*** END OF DATA TRANSFORMATION ***\n')
         # 2. Create the model (and train it if in training mode)
-        print('\n*** start of model selection ***\n')
+        print('*** START OF MODEL SELECTION ***\n')
         model = model_selector.Model(self.model, pos_class).select()
-        print('\n*** end of model selection ***\n')
+        print('\n*** END OF MODEL SELECTION ***\n')
         if self.mode == 'training':
-            print('\n*** start of model training ***\n')
+            print('*** START OF MODEL TRAINING ***\n')
             model, logs = learner.Learner(model).learn(data)
             metrics = None
-            print('\n*** end of model training ***\n')
+            print('\n*** END OF MODEL TRAINING ***\n')
         elif self.mode == 'inference':
             # 3. Run model inference
-            print('\n*** start of model prediction ***\n')
+            print('*** START OF MODEL PREDICTION ***\n')
             predictions = model.predict(data)
-            print('\n*** end of model prediction ***\n')
-            # 4. Evaluate the model
-            print('\n*** start of model evaluation ***\n')
-            metrics = evaluator.Evaluator(self.model).evaluate(data, predictions)
-            logs = None
-            print('\n*** end of model evaluation ***\n')
+            print('*** END OF MODEL PREDICTION ***\n')
+            # # 4. Evaluate the model
+            # print\n*** start of model evaluation ***\n')
+            # metrics = evaluator.Evaluator(self.model).evaluate(data, predictions)
+            # logs = None
+            # print('\n*** end of model evaluation ***\n')
         # 5. Visualize the results
-        print('\n*** start of dashboard visuals ***\n')
-        dashboard.Dashboard(self.mode).visualize(metrics = metrics, logs = logs)
-        print('\n*** end of dashboard visuals ***\n')
+        print('*** START OF DASHBOARD VISUALS ***\n')
+        dashboard.Dashboard(self).visualize(metrics = metrics, logs = logs)
+        print('\n*** END OF DASHBOARD VISUALS ***\n')
 
     # Run the pipeline
     def run(self):
+        print('\n*** START OF PIPELINE ***\n')
         self._build_pipeline()
-        print('Pipeline complete.\n')
+        print('*** END OF PIPELINE ***\n')
         return None
 
 def main():
@@ -83,7 +84,7 @@ def main():
         'model': 'knn',       # choose from 'null_model', 'knn'
         'dataset': 'forestfires', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
         'mode': 'training',          # choose from 'training', 'inference'
-        'cross_validation_splits': 5 # number of experiments 'k' to run k x 2 cross validation
+        'cross_validation_splits': 1 # number of experiments 'k' to run k x 2 cross validation
     }
     pipeline = Pipeline(config)
     pipeline.run()

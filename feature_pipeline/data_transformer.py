@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import time
 import csv
 import os
 import configparser
@@ -313,6 +314,7 @@ class DataTransformer:
 
     # Run the transformer   
     def process(self):
+        start_time = time.time()
         self.load_config()
         self.load_data()
         self.set_poitive_class()
@@ -331,8 +333,12 @@ class DataTransformer:
             train_test_data = self.get_features_labels(train_test_data)
             self.export_data()
             self.data = [train_validation_data, train_test_data]
+            end_time = time.time()
+            print(f"Data transformation time: {end_time - start_time:.2f} s")
             return (self.data, self.positive_class)
         elif self.mode == 'inference':
             self.data = self.transform_inference_data(self.data)
+            end_time = time.time()
+            print(f"Data transformation time: {end_time - start_time:.2f} s")
             return (self.data, self.positive_class)
         return None

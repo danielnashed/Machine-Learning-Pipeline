@@ -1,7 +1,6 @@
 import pandas as pd
 class NullModel:
     def __init__(self):
-        self.rubbish = ''
         self.hyperparameters = None
         self.prediction_type = None
         self.function = None

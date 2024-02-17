@@ -24,7 +24,7 @@ class Model:
         config = configparser.ConfigParser()
         # Read the config file
         config.read(config_path) 
-        print('Loading the config...')
+        print('Loading config file for model...')
         return config
     
     # Select the model and configure the model based on the config file
@@ -39,7 +39,7 @@ class Model:
             self.model.prediction_type = 'regression'
         # set the positive class
         self.model.positive_class = self.positive_class
-        print('Selecting the model...')
+        print('Setting model to ' + self.model.__class__.__name__ + '...')
         return (self.model, self.config)
 
     # Predict
