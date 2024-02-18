@@ -53,9 +53,9 @@ class KNN:
         return y_pred
 
     # Calculate the Euclidian distance between two points in d-dimensional space where 
-    # d is the number of features
+    # d is the number of features. p1 has features + y label. p2 only has features.
     def euclidian_distance(self, p1, p2):
-        return sum((p1[i] - p2[i])**2 for i in range(len(p2) - 1))**0.5
+        return sum((p1[i] - p2[i])**2 for i in range(len(p2)))**0.5
     
     # Find the k-nearest neighbors of the query point
     def knn(self, data, query, k):
@@ -101,4 +101,5 @@ class KNN:
                 weighted_sum_of_labels += weight * neighbor[1][-1]
                 # normalization factor
                 sum_of_weights += weight
-            return weighted_sum_of_labels / sum_of_weights
+            prediction = weighted_sum_of_labels / sum_of_weights
+            return prediction

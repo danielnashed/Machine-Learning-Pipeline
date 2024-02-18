@@ -261,7 +261,7 @@ class DataTransformer:
             col, transform_type = transform_section
             _, column_type = column_section
             # if column has no transformation type or is categorical type, skip
-            if len(transform_type) == 0 or column_type.split()[0] == 'categorical':
+            if len(transform_type) == 0 or column_type == 'categorical nominal':
                 continue
             train_test_transformed_data_inner = []
             # for each fold, transform the data
