@@ -59,8 +59,6 @@ class DataTransformer:
         target_col_index = self.config.items('target_column')[-1][1]
         if target_col_index != str(len(self.data.columns) - 1):
             self.data = self.data[[col for col in self.data.columns if col != int(target_col_index)] + [int(target_col_index)]]
-            # Relabel the column names
-            self.data.columns = range(len(self.data.columns))
         return None
     
     # Set the positive class label for binary classification
@@ -115,9 +113,9 @@ class DataTransformer:
         # extract index of the target column
         target_column_index = int(self.config.items('target_column')[-1][1])
         # handle all categorical columns in data except target column
-        for i, column in column_types[:(target_column_index - len(column_types))]:
-            # check if column exists in dataframe 
-            if int(i) not in self.data.columns:
+        for i, column in column_types:
+            # check if column exists in dataframe or if it is target column
+            if (int(i) not in self.data.columns) or (int(i) == target_column_index):
                 continue
             # if the column is a categorical ordinal type, encode using integer encoding
             if column == 'categorical ordinal':
@@ -133,8 +131,10 @@ class DataTransformer:
 
     # Reorder columns to match the order in the config file
     def reorder_columns(self):
+        # get index for target column so that it is excluded from reordering
+        target_col_index = self.config.items('target_column')[-1][1]
         # split column names into two parts: left part is the index and right part is the name
-        column_truncated_names = [str(col_name).split('_') for col_name in self.data.columns.tolist()]
+        column_truncated_names = [str(col_name).split('_') for col_name in self.data.columns.tolist() if str(col_name) != target_col_index]
         column_left_names = [int(col_name[0]) for col_name in column_truncated_names]
         column_right_names = ['_' + col_name[1] if len(col_name) == 2 else '' for col_name in column_truncated_names]
         # zip the two lists together and sort by values in the first list
@@ -145,6 +145,8 @@ class DataTransformer:
         column_names = [str(left) + right for left, right in zip(column_left_names, column_right_names)]
         # convert names of numerical columns from string to int
         column_names = [int(col) if col.isnumeric() else col for col in column_names]
+        # add back the target column to the end of the list
+        column_names.append(int(target_col_index))
         self.data = self.data[column_names] 
         return None
 
@@ -153,12 +155,8 @@ class DataTransformer:
         print('Discretizing the data...')
         discretize_types = self.config.items('discretization')
         column_types = self.config.items('column_types')
-        # index of the target column
-        target_column_index = int(self.config.items('target_column')[-1][1])
-        # index of the last feature column
-        last_feature_index = target_column_index - len(column_types)
         # handle all columns in data except target column
-        for discretize_section, column_section in zip(discretize_types[:last_feature_index], column_types[:last_feature_index]):
+        for discretize_section, column_section in zip(discretize_types, column_types):
             col, discretize_type = discretize_section
             _, column_type = column_section
             # check if column exists in dataframe 

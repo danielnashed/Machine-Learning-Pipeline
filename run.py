@@ -90,7 +90,7 @@ class Pipeline:
 def main():
     config = {
         'model': 'condensed_knn',       # choose from 'null_model', 'knn', 'condensed_knn'
-        'dataset': 'house-votes-84', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
+        'dataset': 'forestfires', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
         'mode': 'training',          # choose from 'training', 'inference'
         'cross_validation_splits': 1 # number of experiments 'k' to run k x 2 cross validation
     }
