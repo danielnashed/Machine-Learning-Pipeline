@@ -12,7 +12,7 @@ import copy
 # [input] is training data and labels
 # [output] is trained model and logs
 #
-class KNN:
+class EditedKNN:
     def __init__(self):
         self.hyperparameters = None # k for KNN
         self.prediction_type = None # classification or regression
@@ -32,12 +32,35 @@ class KNN:
         data = copy.deepcopy(X)
         # add the target to the data
         data['target'] = y
-        # regardless of the prediction type, the function is the data itself
-        if self.prediction_type == 'classification':
-            self.function = data
-        elif self.prediction_type == 'regression':
-            self.function = data
+        # remove misclassified examples using 1-NN
+        self.function = self.edit(data)
         return learning_metrics
+    
+    def edit(self, data):
+        # for each example in the data, remove it if it is misclassified by 1-NN
+        for i in range(len(data)):
+            # deep copy the data
+            edited_data = copy.deepcopy(data)
+            # extract a single example data point
+            example_as_df = edited_data.iloc[i] # keep as a dataframe
+            example_index = example_as_df.name # get the index of the example
+            example = example_as_df.values.tolist() # convert a copy to list
+            # temporarily remove the example from the data so we don't compare it to itself
+            edited_data = edited_data.drop(example_index)
+            # find the nearest neighbor of the example
+            nearest_neighbor = self.knn(edited_data.values, example, 1)
+            # predict the target value of the example using the nearest neighbor
+            prediction = self.vote(nearest_neighbor)
+            # if the example is misclassified, dont add it back to the data
+            if self.prediction_type == 'classification':
+                # if prediction is correct, add the example back to the data
+                if prediction == example[-1]:
+                    edited_data = pd.concat([edited_data, example_as_df])
+            elif self.prediction_type == 'regression':
+                # if prediction is close to the target value within epsilon, add the example back to the data
+                if abs(prediction - example[-1]) < self.hyperparameters['epsilon']:
+                    edited_data = pd.concat([edited_data, example_as_df])
+        return edited_data
     
     # Predict the target values
     def predict(self, X):
@@ -71,34 +94,18 @@ class KNN:
     
     # Gaussian kernel function for weighted average of k-nearest neighbors
     def kernel(self, distance):
-        sigma = self.hyperparameters['sigma']
-        gamma = 1/sigma
-        radial_basis_function = math.exp(-gamma*distance)
-        return radial_basis_function
+        return (1/(math.sqrt(2*math.pi))) * math.exp(-0.5*distance**2)
     
     # Vote for the target value or label using a weighted average of the k-nearest neighbors
     def vote(self, k_nearest_neighbors):
-        # for classification, use plurality voting
-        if self.prediction_type == 'classification':
-            votes = {}
-            for neighbor in k_nearest_neighbors:
-                # count the number of votes for each label
-                label = neighbor[1][-1]
-                if label in votes:
-                    votes[label] += 1
-                else:
-                    votes[label] = 1
-            return max(votes, key=votes.get)
-        # for regression, use a weighted average
-        elif self.prediction_type == 'regression':
-            weighted_sum_of_labels = 0
-            sum_of_weights = 0
-            for neighbor in k_nearest_neighbors:
-                # weight is calculated using a Gaussian kernel
-                distance = neighbor[0]
-                weight = self.kernel(distance)
-                # weight x target value
-                weighted_sum_of_labels += weight * neighbor[1][-1]
-                # normalization factor
-                sum_of_weights += weight
-            return weighted_sum_of_labels / sum_of_weights
+        weighted_sum_of_labels = 0
+        sum_of_weights = 0
+        for neighbor in k_nearest_neighbors:
+            # weight is calculated using a Gaussian kernel
+            distance = neighbor[0]
+            weight = self.kernel(distance)
+            # weight x target value
+            weighted_sum_of_labels += weight * neighbor[1][-1]
+            # normalization factor
+            sum_of_weights += weight
+        return weighted_sum_of_labels / sum_of_weights

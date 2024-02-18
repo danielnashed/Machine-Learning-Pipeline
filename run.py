@@ -53,7 +53,7 @@ class Pipeline:
         output_directory = os.path.join(os.getcwd(), 'output', directory_name)
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
-            
+
         return (model_fullpath, data_fullpath, mode, splits, output_directory)
 
     # Build the pipeline
@@ -89,8 +89,8 @@ class Pipeline:
 
 def main():
     config = {
-        'model': 'knn',       # choose from 'null_model', 'knn'
-        'dataset': 'forestfires', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
+        'model': 'condensed_knn',       # choose from 'null_model', 'knn', 'condensed_knn'
+        'dataset': 'house-votes-84', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
         'mode': 'training',          # choose from 'training', 'inference'
         'cross_validation_splits': 1 # number of experiments 'k' to run k x 2 cross validation
     }

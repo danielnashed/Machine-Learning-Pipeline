@@ -3,6 +3,7 @@ import os
 from itertools import product
 import pickle
 import time
+import configparser
 from training_pipeline import evaluator as __evaluator__
 
 # [description] this class is responsible for training the model and tuning its hyperparameters. It
@@ -58,7 +59,7 @@ class Learner:
             # save the hyperparameters and average metrics for the model
             metrics_all_models.append((dict(zip(parameters, combination)), metrics_averaged))
         # select the best model based on the favorite metric
-        best_model = max(metrics_all_models, key=lambda x: x[1][self.favorite_metric])
+        best_model = self.get_best_model(metrics_all_models)
         # set the model to the best model
         self.model.set_params(best_model[0])
         # validation curve: should produce logs of model metric as function of hyperparameter
@@ -66,6 +67,27 @@ class Learner:
         end_time = time.time()
         print(f"\nBest hyperparameters: {best_model[0]} --- Hypertuning time: {end_time - start_time:.2f}s")
         return None
+    
+    # Get the best model based on the favorite metric
+    def get_best_model(self, models):
+        prediction_type = self.model.prediction_type
+        # for classification, select the model with the highest favorite metric
+        if prediction_type == 'classification':
+            # for hyperparameter tuning, the metrics are stored in a list of length 2
+            if len(models[0]) == 2:
+                best_model = max(models, key=lambda x: x[1][self.favorite_metric])
+            # for training the model, the metrics are stored in a dictionary
+            else:
+                best_model = max(models, key=lambda x: x[self.favorite_metric])
+        # for regression, select the model with the lowest favorite metric
+        elif prediction_type == 'regression':
+            # for hyperparameter tuning, the metrics are stored in a list of length 2
+            if len(models[0]) == 2:
+                best_model = min(models, key=lambda x: x[1][self.favorite_metric])
+            # for training the model, the metrics are stored in a dictionary
+            else:
+                best_model = min(models, key=lambda x: x[self.favorite_metric])
+        return best_model
     
     # Get the average of the metrics for all experiments
     def get_average(self, metrics_all_experiements):
@@ -86,19 +108,19 @@ class Learner:
         for experiment in data:
             print(f"    Experiment: {len(metrics_all_experiements) + 1} of {len(data)}")
             X_train, y_train, X_test, y_test = experiment
-            learning_metrics = self.model.fit(X_train, y_train)
             # create a deep copy of the model to save it
             model = copy.deepcopy(self.model)
+            learning_metrics = model.fit(X_train, y_train)
             # learning curve: should produce logs of model metric as function of training data size
             self.save_logs(validation_metrics = None, learning_metrics = {'model': model, 'learning_metrics': learning_metrics})
-            models.append(model) # save the model
-            y_test_pred = self.model.predict(X_test)
+            y_test_pred = model.predict(X_test)
             # evaluate the model and save the metrics
             metrics_all_experiements.append(evaluator.evaluate(y_test, y_test_pred))
+            models.append(model) # save the model
         # average the metrics for all experiments
         metrics_averaged = self.get_average(metrics_all_experiements)
         # select the best model based on the favorite metric
-        best_model = models[metrics_all_experiements.index(max(metrics_all_experiements, key=lambda x: x[self.favorite_metric]))]
+        best_model = models[metrics_all_experiements.index(self.get_best_model(metrics_all_experiements))]
         self.model = best_model
         end_time = time.time()
         print(f"\nAverage metrics for trained model: {metrics_averaged} --- Training time: {end_time - start_time:.2f}s")

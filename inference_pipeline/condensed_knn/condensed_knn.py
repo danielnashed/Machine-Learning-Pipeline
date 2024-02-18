@@ -12,12 +12,13 @@ import copy
 # [input] is training data and labels
 # [output] is trained model and logs
 #
-class KNN:
+class CondensedKNN:
     def __init__(self):
         self.hyperparameters = None # k for KNN
         self.prediction_type = None # classification or regression
         self.function = None # function learned from training data
         self.positive_class = None # positive class (if binary classification is used)
+        self.condense_factor = None # % of training data kept after condensing
         
     # Set the hyperparameters for the model (k for KNN)
     def set_params(self, hyperparameters):
@@ -32,12 +33,52 @@ class KNN:
         data = copy.deepcopy(X)
         # add the target to the data
         data['target'] = y
-        # regardless of the prediction type, the function is the data itself
-        if self.prediction_type == 'classification':
-            self.function = data
-        elif self.prediction_type == 'regression':
-            self.function = data
+        # remove misclassified examples using 1-NN
+        self.function = self.condense(data)
+        # number of examples before and after condensing
+        before = len(data)
+        after = len(self.function)
+        self.condense_factor = after / before
+        print(f"    Condensed {before} examples to {after} examples ({self.condense_factor*100:.2f}% of original data)")
         return learning_metrics
+    
+    def condense(self, data):
+        # deep copy the data
+        data = copy.deepcopy(data)
+        # randomly select an example from the data and add it to an empty condensed data
+        random_example = data.sample(n=1)
+        condensed_data = random_example
+        # remove the random example from the data
+        data = data.drop(random_example.index)
+        # initialize flag to keep track of whether the condensed data is changing
+        additions = True
+        # while the condensed data is changing, keep adding examples to it
+        while additions:
+            additions = False # set the flag to false
+            # for each example in the data, add it to the condensed data if it is misclassified by 1-NN
+            for i in range(len(data)):
+                # randomly select an example from the data
+                example_as_df = data.sample(n=1) # keep as a dataframe
+                example_index = example_as_df.index # get the index of the example
+                example = example_as_df.values.tolist()[0] # convert to list
+                # find the nearest neighbor of the example in the condensed data
+                nearest_neighbor = self.knn(condensed_data.values, example, 1)
+                # predict the target value of the example using the nearest neighbor
+                prediction = self.vote(nearest_neighbor)
+                # if the example is misclassified, add it to the condensed data
+                if self.prediction_type == 'classification':
+                    # if prediction is incorrect, add the example to the condensed data
+                    if prediction != example[-1]:
+                        condensed_data = pd.concat([condensed_data, example_as_df])
+                        data = data.drop(example_index) # remove the example from the data
+                        additions = True # set the flag to true
+                elif self.prediction_type == 'regression':
+                    # if prediction is far from the target value, add the example to the condensed data
+                    if abs(prediction - example[-1]) > self.hyperparameters['epsilon']:
+                        condensed_data = pd.concat([condensed_data, example_as_df])
+                        data = data.drop(example_index) # remove the example from the data
+                        additions = True # set the flag to true
+        return condensed_data
     
     # Predict the target values
     def predict(self, X):
