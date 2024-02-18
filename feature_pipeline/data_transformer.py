@@ -62,7 +62,7 @@ class DataTransformer:
         return None
     
     # Set the positive class label for binary classification
-    def set_poitive_class(self):
+    def set_positive_class(self):
         print('Setting the positive class...')
         self.positive_class = self.config.items('positive_class')[0][1].strip()
         return None
@@ -336,7 +336,7 @@ class DataTransformer:
         start_time = time.time()
         self.load_config()
         self.load_data()
-        self.set_poitive_class()
+        self.set_positive_class()
         self.remove_features()
         self.handle_missing_data()
         self.handle_categorical_data()
