@@ -62,7 +62,7 @@ class CondensedKNN:
                 example_index = example_as_df.index # get the index of the example
                 example = example_as_df.values.tolist()[0] # convert to list
                 # find the nearest neighbor of the example in the condensed data
-                nearest_neighbor = self.knn(condensed_data.values, example, 1)
+                nearest_neighbor = self.knn(condensed_data.values, example[:-1], 1)
                 # predict the target value of the example using the nearest neighbor
                 prediction = self.vote(nearest_neighbor)
                 # if the example is misclassified, add it to the condensed data
@@ -96,7 +96,7 @@ class CondensedKNN:
     # Calculate the Euclidian distance between two points in d-dimensional space where 
     # d is the number of features
     def euclidian_distance(self, p1, p2):
-        return sum((p1[i] - p2[i])**2 for i in range(len(p2) - 1))**0.5
+        return sum((p1[i] - p2[i])**2 for i in range(len(p2)))**0.5
     
     # Find the k-nearest neighbors of the query point
     def knn(self, data, query, k):

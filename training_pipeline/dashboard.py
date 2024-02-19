@@ -70,7 +70,6 @@ class Dashboard:
         ax.legend()
         plt.xticks(range(x), x_labels, rotation=90)
         plt.tight_layout()
-        plt.show()
         return fig
 
     # Export the dashboard as a .png file

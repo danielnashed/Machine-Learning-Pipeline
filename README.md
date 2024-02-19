@@ -103,6 +103,14 @@ The entry point is provided in run.py located in the root directory. To run a pi
 - 'mode': choose from 'training', 'inference'
 - 'cross_validation_splits': number of experiments 'k' to run k x 2 cross validation
 
+### Modifying Config Files
+Each model and each datset has its own structured INI config file that contains configuturable parameters which can be modified by users. 
+
+For example, for datasets, the choice of what missing values to impute or ignore, whether a categorical feature is ordinal or nominal, what type of transformation to apply (standardization or normalization), which class label is the positive class, and so on can all be specified within the respective config file of each dataset. 
+
+For models, all hyperparameters can specified in their respective config files as well as a key-value pair where the key is the name of the hyperparameter and the value is a list of values for the hyperparameter. If no hypertuning is required, then the value is simply a list of size 1. The type of prediction to perform, either regression, binary-classification or multi-classification can also be specified. In addition, the choice of which metrics to use for evaluation can be specified in the config file. If multiple metrics are needed for evaluation, simply set the value of the respective metric key to 1. Otherwise, keep value at 0 if you do not wish to use the metric for evaluation.
+
+
 ### Outputs
 Each time a pipeline is executed, a new subdirectory is created inside 'outputs' directory to hold all exported data pertaining to an executed pipeline. The following files are exported during pipeline execution:
 
