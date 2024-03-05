@@ -60,11 +60,11 @@ class Pipeline:
     def _build_pipeline(self):
         # 1. Load data and preprocess it
         print('*** START OF DATA TRANSFORMATION ***\n')
-        data, pos_class = data_transformer.DataTransformer(self.data, self.mode, self.splits, self.output).process()
+        data, pos_class, num_classes = data_transformer.DataTransformer(self.data, self.mode, self.splits, self.output).process()
         print('\n*** END OF DATA TRANSFORMATION ***\n')
         # 2.a. Create the model and train it
         print('*** START OF MODEL SELECTION ***\n')
-        model = model_selector.Model(self.model, pos_class).select()
+        model = model_selector.Model(self.model, pos_class, num_classes).select()
         print('\n*** END OF MODEL SELECTION ***\n')
         if self.mode == 'training':
             print('*** START OF MODEL TRAINING ***\n')
@@ -89,8 +89,8 @@ class Pipeline:
 
 def main():
     config = {
-        'model': 'condensed_knn',       # choose from 'null_model', 'knn', 'condensed_knn'
-        'dataset': 'abalone', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
+        'model': 'decision_tree',       # choose from 'null_model', 'knn', 'condensed_knn', 'decision_tree'
+        'dataset': 'forestfires', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
         'mode': 'training',          # choose from 'training', 'inference'
         'cross_validation_splits': 5 # number of experiments 'k' to run k x 2 cross validation
     }

@@ -98,7 +98,7 @@ All dependencies required for the project have been listed in the file `requirem
 ### Running the Package
 The entry point is provided in run.py located in the root directory. To run a pipeline, modify the config dictionary inside the main method as follows:
 
-- 'model': choose from 'null_model', 'knn', 'edited_knn'
+- 'model': choose from 'null_model', 'knn', 'condensed_knn', 'decision_tree'
 - 'dataset': choose from 'car', 'breast-cancer-wisconsin' 'house-votes-84', 'abalone',  'machine', 'forestfires', 'racetracks'
 - 'mode': choose from 'training', 'inference'
 - 'cross_validation_splits': number of experiments 'k' to run k x 2 cross validation

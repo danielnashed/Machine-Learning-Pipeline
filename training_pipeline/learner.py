@@ -4,6 +4,7 @@ from itertools import product
 import pickle
 import time
 import configparser
+import math
 from training_pipeline import evaluator as __evaluator__
 
 # [description] this class is responsible for training the model and tuning its hyperparameters. It
@@ -32,6 +33,9 @@ class Learner:
     def hyperparameter_tuning(self, data):
         start_time = time.time()
         hyperparameters = self.config.items('hyperparameters')
+        if len(hyperparameters) == 0:
+            print('No hyperparameters to tune.')
+            return None
         metrics_all_models = []
         parameters = [line[0] for line in hyperparameters] # extract names of hyperparameters
         values = [line[1] for line in hyperparameters] # extract values of each hyperparameter
@@ -62,8 +66,10 @@ class Learner:
         best_model = self.get_best_model(metrics_all_models)
         # set the model to the best model
         self.model.set_params(best_model[0])
-        # validation curve: should produce logs of model metric as function of hyperparameter
-        self.save_logs(validation_metrics = metrics_all_models, learning_metrics = None)
+        # save the logs if there are hyperparameters that were tuned
+        if len(hyperparameters) != 0:
+            # validation curve: should produce logs of model metric as function of hyperparameter
+            self.save_logs(validation_metrics = metrics_all_models, learning_metrics = None)
         end_time = time.time()
         print(f"\nBest hyperparameters: {best_model[0]} --- Hypertuning time: {end_time - start_time:.2f}s")
         return None
@@ -94,7 +100,7 @@ class Learner:
         metrics_averaged = {}
         # calculate average of each metric
         for metric in metrics_all_experiements[0].keys():
-            metrics_averaged[metric] = sum([experiment[metric] for experiment in metrics_all_experiements]) / len(metrics_all_experiements)
+            metrics_averaged[metric] = sum([experiment[metric] for experiment in metrics_all_experiements if not math.isnan(experiment[metric])]) / len(metrics_all_experiements)
         return metrics_averaged
     
     # Train the model

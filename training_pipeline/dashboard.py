@@ -24,9 +24,12 @@ class Dashboard:
 
     # Visualize the model's performance
     def visualize(self, metrics, logs):
-        learning_curve_fig = self.plot_learning_curve(logs['learning_metrics'])
-        validation_curve_fig = self.plot_validation_curve(logs['validation_metrics'])
-        self.export_dashboard(learning_curve_fig, validation_curve_fig)
+        if len(logs['learning_metrics']) != 0:
+            learning_curve_fig = self.plot_learning_curve(logs['learning_metrics'])
+            self.export_dashboard(learning_curve_fig, None)
+        if len(logs['validation_metrics']) != 0:
+            validation_curve_fig = self.plot_validation_curve(logs['validation_metrics'])
+            self.export_dashboard(None, validation_curve_fig)
         return None
     
     # Plot the learning curve (TO BE IMPLEMENTED LATER IN PROJECT 2)   
@@ -75,10 +78,12 @@ class Dashboard:
     # Export the dashboard as a .png file
     def export_dashboard(self, learning_curve_fig, validation_curve_fig):
         print('Exporting the dashboard...')
-        learning_curve_name = self.model + ' learning curve with ' + self.data + 'dataset using k_x_' + str(self.splits) + ' cross validation.png'
-        validation_curve_name = self.model + ' validation curve with ' + self.data + 'dataset using k_x_' + str(self.splits) + ' cross validation.png'
-        learning_curve_fullpath = os.path.join(self.output, learning_curve_name)
-        validation_curve_fullpath = os.path.join(self.output, validation_curve_name)
-        learning_curve_fig.savefig(learning_curve_fullpath)
-        validation_curve_fig.savefig(validation_curve_fullpath)        
+        if learning_curve_fig is not None:
+            learning_curve_name = self.model + ' learning curve with ' + self.data + 'dataset using k_x_' + str(self.splits) + ' cross validation.png'
+            learning_curve_fullpath = os.path.join(self.output, learning_curve_name)
+            learning_curve_fig.savefig(learning_curve_fullpath)
+        if validation_curve_fig is not None:
+            validation_curve_name = self.model + ' validation curve with ' + self.data + 'dataset using k_x_' + str(self.splits) + ' cross validation.png'
+            validation_curve_fullpath = os.path.join(self.output, validation_curve_name)
+            validation_curve_fig.savefig(validation_curve_fullpath)      
         return None

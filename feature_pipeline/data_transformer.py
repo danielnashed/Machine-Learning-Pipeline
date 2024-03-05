@@ -25,6 +25,7 @@ class DataTransformer:
         self.splits = splits # number of cross validation splits
         self.output = output # output directory
         self.positive_class = None # positive class label (only for binary classification)
+        self.num_classes = None # number of classes in target variable
 
     # Load the config file
     def load_config(self):
@@ -65,6 +66,12 @@ class DataTransformer:
     def set_positive_class(self):
         print('Setting the positive class...')
         self.positive_class = self.config.items('positive_class')[0][1].strip()
+        return None
+
+    def set_num_classes(self): ### FIX THIS
+        print('Setting the number of classes...')
+        #self.num_classes = int(self.config.items('class_distribution')[0][1].strip())
+        self.num_classes = 0
         return None
 
     # Remove unnecessary features
@@ -337,26 +344,27 @@ class DataTransformer:
         self.load_config()
         self.load_data()
         self.set_positive_class()
+        self.set_num_classes()
         self.remove_features()
         self.handle_missing_data()
-        self.handle_categorical_data()
-        self.discretize_data()
+        #self.handle_categorical_data() # disabled for decision trees
+        #self.discretize_data() # disabled for decision trees
         if self.mode == 'training':
             self.split_data()
             train_validation_data = self.data_for_hyperparameter_tuning()
-            train_validation_data = self.transform_data(train_validation_data)
+            #train_validation_data = self.transform_data(train_validation_data) # disabled for decision trees
             train_validation_data = self.get_features_labels(train_validation_data)
             train_test_data = self.data_for_model_training()
-            train_test_data = self.transform_data(train_test_data)
+            #train_test_data = self.transform_data(train_test_data) # disabled for decision trees
             train_test_data = self.get_features_labels(train_test_data)
             self.export_data()
             self.data = [train_validation_data, train_test_data]
             end_time = time.time()
             print(f"Data transformation time: {end_time - start_time:.2f} s")
-            return (self.data, self.positive_class)
+            return (self.data, self.positive_class, self.num_classes)
         elif self.mode == 'inference':
             self.data = self.transform_inference_data(self.data)
             end_time = time.time()
             print(f"Data transformation time: {end_time - start_time:.2f} s")
-            return (self.data, self.positive_class)
+            return (self.data, self.positive_class, self.num_classes)
         return None
