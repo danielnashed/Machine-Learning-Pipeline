@@ -33,6 +33,10 @@ class Learner:
     def hyperparameter_tuning(self, data):
         start_time = time.time()
         hyperparameters = self.config.items('hyperparameters')
+        # only for decision tree, store the 20% validation set in the model to perform pruning
+        if self.model.__class__.__name__ == 'DecisionTree':
+            if self.model.pruning == True:
+                self.model.validation_set = data[0][2:]
         if len(hyperparameters) == 0:
             print('No hyperparameters to tune.')
             return None

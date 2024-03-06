@@ -51,5 +51,8 @@ class Model:
         # set the positive class and number of classes
         self.model.positive_class = self.positive_class
         self.model.num_classes = self.num_classes
+        # only for decision trees, set the pruning to True or False
+        if self.model.__class__.__name__ == 'DecisionTree':
+            self.model.pruning = bool(int(self.config['pruning']['pruning']))
         print('Setting model to ' + self.model.__class__.__name__ + '...')
         return (self.model, self.config)

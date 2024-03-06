@@ -2,7 +2,7 @@ import pandas as pd
 import copy
 import operator
 import numpy as np
-import node as TreeNode
+import unit_test.node_void as TreeNode
 
 # K-Nearest Neighbors (KNN) model
 # [description] KNN is a non-parametric, lazy learning algorithm that can be used for classification 

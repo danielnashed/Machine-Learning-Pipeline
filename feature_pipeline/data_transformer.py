@@ -352,10 +352,10 @@ class DataTransformer:
         if self.mode == 'training':
             self.split_data()
             train_validation_data = self.data_for_hyperparameter_tuning()
-            #train_validation_data = self.transform_data(train_validation_data) # disabled for decision trees
+            train_validation_data = self.transform_data(train_validation_data) # disabled for decision trees
             train_validation_data = self.get_features_labels(train_validation_data)
             train_test_data = self.data_for_model_training()
-            #train_test_data = self.transform_data(train_test_data) # disabled for decision trees
+            train_test_data = self.transform_data(train_test_data) # disabled for decision trees
             train_test_data = self.get_features_labels(train_test_data)
             self.export_data()
             self.data = [train_validation_data, train_test_data]
