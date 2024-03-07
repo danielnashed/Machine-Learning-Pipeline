@@ -362,7 +362,7 @@ class DecisionTree:
         # keep pruning until no more non-grandparent nodes are left or we cannot improve accuracy
         while keep_pruning and counter < 10:
             counter += 1
-            print(f'Pruning decision tree, iteration: {counter}')
+            print(f'     Pruning decision tree, iteration: {counter}')
             # iterate over all non-grandparent nodes
             for non_grandparent in self.non_grandparents:
                 # create a new copy of the decision tree
