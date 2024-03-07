@@ -11,7 +11,7 @@ import configparser
 # [output] is instantiated model class and its config file
 #
 class Model:
-    def __init__(self, directory_path, positive_class, num_classes):
+    def __init__(self, directory_path, meta_data):
         # get the model name from the directory path
         model_name = os.path.basename(directory_path)
         # get the model path relative to directory of this file
@@ -28,8 +28,9 @@ class Model:
         config_path = os.path.join(directory_path, model_name + '.config')
         self.config = self.load_config(config_path)
         self.model = None # model
-        self.positive_class = positive_class # positive class for binary classification
-        self.num_classes = num_classes # number of classes for multi-class classification
+        self.positive_class = meta_data['pos_class'] # positive class for binary classification
+        self.num_classes = meta_data['num_classes'] # number of classes for multi-class classification
+        self.column_names = meta_data['column_names'] # column names for the dataset
 
     # Load the config file for the model
     def load_config(self, config_path):
@@ -51,6 +52,7 @@ class Model:
         # set the positive class and number of classes
         self.model.positive_class = self.positive_class
         self.model.num_classes = self.num_classes
+        self.model.column_names = self.column_names
         # only for decision trees, set the pruning to True or False
         if self.model.__class__.__name__ == 'DecisionTree':
             self.model.pruning = bool(int(self.config['pruning']['pruning']))

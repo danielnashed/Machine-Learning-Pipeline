@@ -6,6 +6,7 @@ import time
 import configparser
 import math
 from training_pipeline import evaluator as __evaluator__
+from inference_pipeline.decision_tree import tree_visualizer as TreeVisualizer
 
 # [description] this class is responsible for training the model and tuning its hyperparameters. It
 # also exports the model and logs for the model.
@@ -154,9 +155,15 @@ class Learner:
     # Export the trained model as a pickle file
     def export_model(self):
         print('Exporting the model...')
-        full_path = os.path.join(self.output, self.model.__class__.__name__ + '.pickle')
+        model_name = self.model.__class__.__name__
+        full_path = os.path.join(self.output, model_name + '.pickle')
         with open(full_path, 'wb') as f:
             pickle.dump(self.model, f)
+        # only for decision tree, export the tree as a .png file
+        if model_name == 'DecisionTree':
+            image_path = os.path.join(self.output, model_name + '.gv')
+            visualizer = TreeVisualizer.DecisionTreeVisualizer(self.model.column_names, self.model.prediction_type, image_path)
+            visualizer.draw_tree(self.model.function)
         return None
 
     # Run the learner

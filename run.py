@@ -60,15 +60,15 @@ class Pipeline:
     def _build_pipeline(self):
         # 1. Load data and preprocess it
         print('*** START OF DATA TRANSFORMATION ***\n')
-        data, pos_class, num_classes = data_transformer.DataTransformer(self.data, self.mode, self.splits, self.output).process()
+        data = data_transformer.DataTransformer(self.data, self.mode, self.splits, self.output).process()
         print('\n*** END OF DATA TRANSFORMATION ***\n')
         # 2.a. Create the model and train it
         print('*** START OF MODEL SELECTION ***\n')
-        model = model_selector.Model(self.model, pos_class, num_classes).select()
+        model = model_selector.Model(self.model, data.meta).select()
         print('\n*** END OF MODEL SELECTION ***\n')
         if self.mode == 'training':
             print('*** START OF MODEL TRAINING ***\n')
-            model, logs = learner.Learner(model, self.output).learn(data)
+            model, logs = learner.Learner(model, self.output).learn(data.data)
             metrics = None
             print('\n*** END OF MODEL TRAINING ***\n')
         elif self.mode == 'inference':

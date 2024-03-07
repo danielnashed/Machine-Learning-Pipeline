@@ -5,6 +5,7 @@ import numpy as np
 import sys
 from math import isnan
 from inference_pipeline.decision_tree import node as TreeNode
+from inference_pipeline.decision_tree import tree_pruner as TreePruner
 
 # K-Nearest Neighbors (KNN) model
 # [description] KNN is a non-parametric, lazy learning algorithm that can be used for classification 
@@ -26,13 +27,13 @@ class DecisionTree:
         self.function = None # function learned from training data
         self.positive_class = None # positive class (if binary classification is used)
         self.num_classes = None # number of classes (if multi-class classification is used)
+        self.column_names = None # column names for the dataset
         self.classes = None # unique classes in the training data
         self.split_criterion = None # split criterion for decision tree
         self.min_samples_leaf = 1 # minimum number of samples in a leaf node (default = 1)
         self.max_depth = float('inf') # maximum depth of the decision tree (default = infinity)
         self.pruning = False # whether to perform pruning on the decision tree
         self.validation_set = None # validation set for pruning
-        self.metric = None # metric for evaluating the decision tree
         self.num_nodes_before_pruning = None
         self.num_nodes_after_pruning = None
         sys.setrecursionlimit(3000) # set recursion limit to 3000 for large datasets
@@ -43,15 +44,12 @@ class DecisionTree:
 
     # Train the model
     def fit(self, X, y):
-        # learning curve: should produce logs of model metric as function of % of trainng data 
-        # used for training. There is no learning curve associated with KNN.
+        # learning curve: should produce logs of model metric as function of % of training data 
+        # used for training. No learning curve is produced for decision tree.
         learning_metrics = None
-        # deep copy the training data
-        data = copy.deepcopy(X)
-        # add the target to the data
-        data['target'] = y
-        # get all unique classes
-        self.classes = data['target'].unique()
+        data = copy.deepcopy(X) # deep copy training data
+        data['target'] = y # add target to data
+        self.classes = data['target'].unique() # get all unique classes
         # set min_samples_leaf to 10 if the number of samples is greater than 1000 to prevent stack overflow
         # if len(data) > 200:
         #     self.min_samples_leaf = 2
@@ -70,10 +68,8 @@ class DecisionTree:
         self.num_nodes_before_pruning = self.id
         # prune the trained decision tree if pruning is set to True
         if self.pruning:
-            self.function = self.prune_tree()
-            #pass
-        # reset id
-        #self.id = 0
+            #self.function = self.prune_tree()
+            self.function = TreePruner.DecisionTreePruner(self).prune_tree()
         return learning_metrics
     
     def current_entropy(self, data):
@@ -243,6 +239,7 @@ class DecisionTree:
         children, children_ids, threshold = self.split_into_children(root, best_feature)
         root.children = children
         root.feature = best_feature
+        root.feature_name = self.column_names[best_feature]
         root.threshold = threshold
         depth += 1 # increment the depth for the children
         # add children ids to list of nodes
@@ -252,7 +249,7 @@ class DecisionTree:
         # recursively build the tree for each child
         for child in children:
             self.build_tree(child, depth)
-        # After visiting all children of the root, tag root as not a grandparent (its children are leaves)
+        # After visiting all children of the root, tag root as grandparent or not
         root.grandparent = self.is_grandparent(root, children)
         return root
     
@@ -299,108 +296,5 @@ class DecisionTree:
             y_pred.append(prediction)
         y_pred = pd.DataFrame(y_pred) # convert to dataframe object
         return y_pred
-    
-    def post_order_traversal(self, root):
-        if root.children:
-            for child in root.children:
-                self.post_order_traversal(child)
-            root.grandparent = self.is_grandparent(root, root.children)
-            self.num_nodes_after_pruning += 1
-        return None
-    
-    def update_non_grandparents(self, root):
-        current_non_grandparents = self.non_grandparents
-        self.non_grandparents = [] # reset non-grandparents
-        self.post_order_traversal(root)
-        new_non_grandparents = self.non_grandparents
-        # if a change in non-grandparents is detected and list is not empty, then keep pruning
-        if (current_non_grandparents != new_non_grandparents) and (len(new_non_grandparents) > 0):
-            return True
-        return False
-    
-    def get_node(self, node_id, root):
-        # if node id is found, return the node
-        if root.id == node_id:
-            return root
-        # if node id is not found, recursively search for the node in the children
-        if root.children:
-            for child in root.children:
-                node = self.get_node(node_id, child)
-                if node:
-                    return node
-        return None
-    
-        # Calculate mean squared error for regression
-    def compute_mse(self, labels, predictions):
-        return sum([(label - prediction)**2 for label, prediction in zip(list(labels), predictions.iloc[:, 0].values)]) / len(labels)
-    
-    def evaluate_performance(self, y_pred, y_true):
-        # if classification, calculate accuracy
-        if self.prediction_type == 'classification':
-            correct = 0
-            for i in range(len(y_pred)):
-                if y_pred.iloc[i] == y_true.iloc[i]:
-                    correct += 1
-            accuracy = correct/len(y_pred)
-            return accuracy
-        # if regression, calculate mean squared error
-        elif self.prediction_type == 'regression':
-            #mse = np.mean((y_pred - y_true)**2)
-            mse = self.compute_mse(y_true, y_pred)
-            return mse
-    
-    def prune_tree(self):
-        # calculate accuracy of original tree on validation set
-        x_val, y_val = self.validation_set
-        y_pred = self.predict(x_val)
-        self.metric = self.evaluate_performance(y_pred, y_val)
-        # dictionary to map operator based on split criterion condition
-        ops = {'>': operator.gt, '<': operator.lt}
-        op = '>' if self.prediction_type == 'classification' else '<'
-        keep_pruning = True # flag to keep pruning
-        counter = 0 # counter to prevent infinite loop
-        # keep pruning until no more non-grandparent nodes are left or we cannot improve accuracy
-        while keep_pruning and counter < 10:
-            counter += 1
-            print(f'     Pruning decision tree, iteration: {counter}')
-            # iterate over all non-grandparent nodes
-            for non_grandparent in self.non_grandparents:
-                # create a new copy of the decision tree
-                new_tree = copy.deepcopy(self.function)
-                node = self.get_node(non_grandparent, new_tree)
-                # prune the node
-                node.children = None
-                node.feature = None
-                node.threshold = None
-                node.grandparent = None
-                # test new tree on validation set
-                y_pred = self.predict(x_val, new_tree)
-                # calculate accuracy of new tree
-                metric = self.evaluate_performance(y_pred, y_val)
-                # if classification, select higher accuracy. If regression, select lower mean squared error
-                if (not isnan(metric)) and (ops[op](metric, self.metric)):
-                    self.function = copy.deepcopy(new_tree)
-                    self.metric = metric
-            # after pruning, update the list of non-grandparent nodes
-            self.num_nodes_after_pruning = 0
-            keep_pruning = self.update_non_grandparents(self.function)
-        return self.function
 
 
-    
-    # def prune_tree(self):
-    #     # iterate over all layers in the tree starting at the bottom
-    #     for layer in range(len(self.list_of_nodes)-2, 0, -1):
-    #         # iterate over all siblings in the layer
-    #         for nodes in self.list_of_nodes[layer]:
-    #             # iterate over all nodes in the sibling family
-    #             for node_id in nodes:
-    #                 # create a new copy of the decision tree
-    #                 new_tree = copy.deepcopy(self.function)
-    #                 node = self.get_node(node_id, new_tree)
-    #                 # if node is not a leaf node, then prune it
-    #                 if node.children:
-    #                     node.children = None
-    #                     node.feature = None
-    #                     node.threshold = None
-    #     return None

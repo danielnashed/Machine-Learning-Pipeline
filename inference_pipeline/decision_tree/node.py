@@ -3,6 +3,7 @@ class Node:
         self.id = id
         self.data = data
         self.feature = feature
+        self.feature_name = None
         self.threshold = threshold
         self.children = children
         self.grandparent = None

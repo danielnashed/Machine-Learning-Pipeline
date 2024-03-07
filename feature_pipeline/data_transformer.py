@@ -5,6 +5,7 @@ import csv
 import os
 import configparser
 import copy
+from feature_pipeline import meta_data as __meta_data__
 
 # [description] this class is responsible for transforming raw data into processed data 
 # that can be used for model training or inference. It also splits the data into train,
@@ -26,6 +27,7 @@ class DataTransformer:
         self.output = output # output directory
         self.positive_class = None # positive class label (only for binary classification)
         self.num_classes = None # number of classes in target variable
+        self.column_names = None # column names in the data
 
     # Load the config file
     def load_config(self):
@@ -51,9 +53,11 @@ class DataTransformer:
         # Remove last row if it is all empty
         if self.data.iloc[-1].isnull().any():
             self.data = self.data.iloc[:-1]
-        # Remove header row if it exists
+        # Get column names from config file
         column_names = self.config.items('column_names')
         column_names = [line[1] for line in column_names]
+        self.column_names = self.feature_mapping(column_names)
+         # Remove header row if it exists
         if self.data.iloc[0].values.tolist() == column_names:
             self.data = self.data.iloc[1:]
         # Move target column to the last column if it is not already
@@ -61,6 +65,9 @@ class DataTransformer:
         if target_col_index != str(len(self.data.columns) - 1):
             self.data = self.data[[col for col in self.data.columns if col != int(target_col_index)] + [int(target_col_index)]]
         return None
+    
+    def feature_mapping(self, names):
+        return {i: names[i] for i in range(len(names))}
     
     # Set the positive class label for binary classification
     def set_positive_class(self):
@@ -337,6 +344,12 @@ class DataTransformer:
         self.data[0].to_csv(os.path.join(self.output, 'processed_train_data.csv'))
         self.data[1].to_csv(os.path.join(self.output, 'processed_validation_data.csv'))
         return None
+    
+    def set_meta_data(self):
+        print('Setting the meta data...')
+        meta_data = __meta_data__.MetaData()
+        meta_data.set_meta(self.data, self.column_names, self.positive_class, self.num_classes)
+        return meta_data
 
     # Run the transformer   
     def process(self):
@@ -361,10 +374,8 @@ class DataTransformer:
             self.data = [train_validation_data, train_test_data]
             end_time = time.time()
             print(f"Data transformation time: {end_time - start_time:.2f} s")
-            return (self.data, self.positive_class, self.num_classes)
         elif self.mode == 'inference':
             self.data = self.transform_inference_data(self.data)
             end_time = time.time()
             print(f"Data transformation time: {end_time - start_time:.2f} s")
-            return (self.data, self.positive_class, self.num_classes)
-        return None
+        return self.set_meta_data()
