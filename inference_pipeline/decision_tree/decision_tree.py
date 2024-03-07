@@ -130,6 +130,9 @@ class DecisionTree:
         return split_info
 
     def gain_ratio(self, data, feature):
+        # if all values of the feature are the same, then return very small gain ratio
+        if len(data[feature].unique()) == 1:
+            return float('-inf')
         gain_ratio = self.gain(data, feature) / self.split_info(data, feature)
         return gain_ratio
     
@@ -139,6 +142,9 @@ class DecisionTree:
             branches = []
             branch_predictions = []
             unique_values = data[feature].unique()
+            # if all values of the feature are the same, then return very large error
+            if len(unique_values) == 1:
+                return float('inf')
             for value in unique_values:
                 subset = data[data[feature] == value]
                 branches.append(subset)
@@ -146,6 +152,9 @@ class DecisionTree:
                 branch_predictions.append(subset['target'].mode()[0])
         # if feature is continuous, make a binary split at mean of feature
         else:
+            # if all values of the feature are the same, then return very large error
+            if len(data[feature].unique()) == 1:
+                return float('inf')
             mean = data[feature].mean()
             subset1 = data[data[feature] < mean]
             subset2 = data[data[feature] >= mean]
@@ -235,6 +244,9 @@ class DecisionTree:
             return root
         # find the best feature to split on
         best_feature = self.select_best_feature(root.data)
+        # if no best feature found, then return node
+        if best_feature is None:
+            return root
         # split the data in the root into children based on the best feature
         children, children_ids, threshold = self.split_into_children(root, best_feature)
         root.children = children

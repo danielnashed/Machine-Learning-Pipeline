@@ -18,12 +18,17 @@ class DecisionTreeVisualizer:
                 return str(round(node.data['target'].mean(), 2)), True
         # label the node with the feature name
         feature_name = str(node.feature_name)
-        # if the feature is a number, round it then convert to string
+        # if the feature is not a list or array
         if not isinstance(node.threshold, (list, np.ndarray)):
-            feature_threshold = str(round(node.threshold, 1))
+            # if the feature is a number, round it to 2 decimal places
+            if isinstance(node.threshold, (int, float)):
+                feature_threshold = str(round(node.threshold, 2))
+            else:
+                feature_threshold = str(node.threshold)
         # if the feature is a list or numpy array, convert it to a string
         else:
-            feature_threshold = str(node.threshold)
+            # replace the forward slash with a backslash for the threshold
+            feature_threshold = str([str(x).replace("/", ",").replace(":", ",") for x in node.threshold])
         label = feature_name + '\n' + feature_threshold
         return label, False
 
