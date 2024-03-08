@@ -3,7 +3,6 @@ import copy
 import operator
 import numpy as np
 import sys
-from math import isnan
 from inference_pipeline.decision_tree import node as TreeNode
 from inference_pipeline.decision_tree import tree_pruner as TreePruner
 
@@ -34,8 +33,6 @@ class DecisionTree:
         self.max_depth = float('inf') # maximum depth of the decision tree (default = infinity)
         self.pruning = False # whether to perform pruning on the decision tree
         self.validation_set = None # validation set for pruning
-        self.num_nodes_before_pruning = None
-        self.num_nodes_after_pruning = None
         sys.setrecursionlimit(3000) # set recursion limit to 3000 for large datasets
         
     # Set the hyperparameters for the model (k for KNN)
@@ -49,11 +46,7 @@ class DecisionTree:
         learning_metrics = None
         data = copy.deepcopy(X) # deep copy training data
         data['target'] = y # add target to data
-        self.classes = data['target'].unique() # get all unique classes
-        # set min_samples_leaf to 10 if the number of samples is greater than 1000 to prevent stack overflow
-        # if len(data) > 200:
-        #     self.min_samples_leaf = 2
-        #     self.max_depth = 100
+        self.classes = data['target'].unique() # get all unique classes in the target variable
         # select split criterion based on either classification or regression
         if self.prediction_type == 'classification':
             self.split_criterion = self.gain_ratio
@@ -65,12 +58,28 @@ class DecisionTree:
         self.list_of_nodes[0] = [[root.id]]
         # build the decision tree
         self.function = self.build_tree(root)
-        self.num_nodes_before_pruning = self.id
         # prune the trained decision tree if pruning is set to True
         if self.pruning:
             self.function = TreePruner.DecisionTreePruner(self).prune_tree()
         return learning_metrics
     
+    def optimal_split_value(self, data, feature):
+        data = copy.deepcopy(data) # create a copy of the data 
+        data = data.sort_values(feature) # sort the data by the feature
+        class_label = data['target'].iloc[0] # get first class label in dataset
+        best_gain_ratio = float('-inf') # initialize best gain ratio
+        best_split_value = None # initialize best split value
+        for i in range(len(data)):
+            # if class label changes, compute gain ratio at the split point
+            if data['target'].iloc[i] != class_label:
+                class_label = data['target'].iloc[i] # update class label
+                split_value = (data[feature].iloc[i] + data[feature].iloc[i-1])/2
+                gain_ratio = self.gain(data, feature, split_value) / self.split_info(data, feature, split_value)
+                if gain_ratio > best_gain_ratio:
+                    best_gain_ratio = gain_ratio
+                    best_split_value = split_value
+        return best_split_value
+
     def current_entropy(self, data):
         entropy = 0
         for cls in self.classes:
@@ -81,7 +90,7 @@ class DecisionTree:
             entropy += -p*np.log2(p)
         return entropy
 
-    def expected_entropy(self, data, feature):
+    def expected_entropy(self, data, feature, split_value):
         # if feature is categorical, make a split for each unique value of the feature
         if data[feature].dtype == 'object':
             unique_values = data[feature].unique()
@@ -91,19 +100,18 @@ class DecisionTree:
                 entropy += len(subset)/len(data) * self.current_entropy(subset)
         # if feature is continuous, make a binary split at mean of feature
         else:
-            mean = data[feature].mean()
-            subset1 = data[data[feature] < mean]
-            subset2 = data[data[feature] >= mean]
+            subset1 = data[data[feature] < split_value]
+            subset2 = data[data[feature] >= split_value]
             subset1_entropy = len(subset1)/len(data) * self.current_entropy(subset1)
             subset2_entropy = len(subset2)/len(data) * self.current_entropy(subset2)
             entropy = subset1_entropy + subset2_entropy
         return entropy
 
-    def gain(self, data, feature):
-        gain = self.current_entropy(data) - self.expected_entropy(data, feature)
+    def gain(self, data, feature, split_value):
+        gain = self.current_entropy(data) - self.expected_entropy(data, feature, split_value)
         return gain
     
-    def split_info(self, data, feature):
+    def split_info(self, data, feature, split_value):
         split_info = 1e-7
         # if feature is categorical, make a split for each unique value of the feature
         if data[feature].dtype == 'object':
@@ -114,9 +122,8 @@ class DecisionTree:
                     split_info += -len(subset)/len(data) * np.log2(len(subset)/len(data))
         # if feature is continuous, make a binary split at mean of feature
         else:
-            mean = data[feature].mean()
-            subset1 = data[data[feature] < mean]
-            subset2 = data[data[feature] >= mean]
+            subset1 = data[data[feature] < split_value]
+            subset2 = data[data[feature] >= split_value]
             if len(data) > 0 and len(subset1) > 0:
                 subset1_split_info = -len(subset1)/len(data) * np.log2(len(subset1)/len(data))
             else:
@@ -132,18 +139,23 @@ class DecisionTree:
         # if all values of the feature are the same, then return very small gain ratio
         if len(data[feature].unique()) == 1:
             return float('-inf')
-        gain_ratio = self.gain(data, feature) / self.split_info(data, feature)
+        # if feature is continous, determine the split point that maximizes the gain ratio
+        if data[feature].dtype != 'object':
+            split_value = self.optimal_split_value(data, feature)
+        else:
+            split_value = None
+        gain_ratio = self.gain(data, feature, split_value) / self.split_info(data, feature, split_value)
         return gain_ratio
     
     def squared_error(self, data, feature):
+        # if all values of the feature are the same, then return very large error
+        if len(data[feature].unique()) == 1:
+            return float('inf')
         # if feature is categorical, make a split for each unique value of the feature
         if data[feature].dtype == 'object':
             branches = []
             branch_predictions = []
             unique_values = data[feature].unique()
-            # if all values of the feature are the same, then return very large error
-            if len(unique_values) == 1:
-                return float('inf')
             for value in unique_values:
                 subset = data[data[feature] == value]
                 branches.append(subset)
@@ -151,9 +163,6 @@ class DecisionTree:
                 branch_predictions.append(subset['target'].mode()[0])
         # if feature is continuous, make a binary split at mean of feature
         else:
-            # if all values of the feature are the same, then return very large error
-            if len(data[feature].unique()) == 1:
-                return float('inf')
             mean = data[feature].mean()
             subset1 = data[data[feature] < mean]
             subset2 = data[data[feature] >= mean]

@@ -13,7 +13,7 @@ class DecisionTreePruner():
         self.validation_set = meta_tree.validation_set # get the validation set
         self.prediction_type = meta_tree.prediction_type # get the prediction type
         self.non_grandparents = meta_tree.non_grandparents # initialize list of non-grandparent nodes
-        self.num_nodes_before_pruning = meta_tree.num_nodes_before_pruning # initialize number of nodes before pruning
+        self.num_nodes_before_pruning = meta_tree.id # initialize number of nodes before pruning
         self.num_nodes_after_pruning = 1 # initialize number of nodes after pruning
         # initialize max depth before pruning and after pruning
         self.max_depth_before_pruning = self.find_max_depth(self.tree)
