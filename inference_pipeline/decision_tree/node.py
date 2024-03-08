@@ -7,4 +7,5 @@ class Node:
         self.threshold = threshold
         self.children = children
         self.grandparent = None
+        self.visited = False
         self.depth = 0

@@ -108,6 +108,22 @@ class Learner:
             metrics_averaged[metric] = sum([experiment[metric] for experiment in metrics_all_experiements if not math.isnan(experiment[metric])]) / len(metrics_all_experiements)
         return metrics_averaged
     
+    # Get the standard deviation of the metrics for all experiments
+    def get_std(self, metrics_all_experiements, metrics_average):
+        metrics_std = {}
+        # calculate standard deviation of each metric
+        for metric in metrics_all_experiements[0].keys():
+            metrics_std[metric] = math.sqrt(sum([(experiment[metric] - metrics_average[metric])**2 for experiment in metrics_all_experiements if not math.isnan(experiment[metric])]) / len(metrics_all_experiements))
+        return metrics_std
+    
+    def get_stats(self, metrics_all_experiements):
+        metrics_average = self.get_average(metrics_all_experiements)
+        metrics_std = self.get_std(metrics_all_experiements, metrics_average)
+        # round the metrics to 3 decimal places
+        metrics_average = {key + '_mean': round(value, 3) for key, value in metrics_average.items()}
+        metrics_std = {key + '_std': round(value, 3) for key, value in metrics_std.items()}
+        return (metrics_average, metrics_std)
+
     # Train the model
     def train_model(self, data):
         start_time = time.time()
@@ -129,12 +145,12 @@ class Learner:
             metrics_all_experiements.append(evaluator.evaluate(y_test, y_test_pred))
             models.append(model) # save the model
         # average the metrics for all experiments
-        metrics_averaged = self.get_average(metrics_all_experiements)
+        metrics_average, metrics_std = self.get_stats(metrics_all_experiements)
         # select the best model based on the favorite metric
         best_model = models[metrics_all_experiements.index(self.get_best_model(metrics_all_experiements))]
         self.model = best_model
         end_time = time.time()
-        print(f"\nAverage metrics for trained model: {metrics_averaged} --- Training time: {end_time - start_time:.2f}s")
+        print(f"\nMetrics for trained model: {metrics_average} {metrics_std} --- Training time: {end_time - start_time:.2f}s")
         return None
     
     # Save the logs

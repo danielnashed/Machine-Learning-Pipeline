@@ -68,7 +68,6 @@ class DecisionTree:
         self.num_nodes_before_pruning = self.id
         # prune the trained decision tree if pruning is set to True
         if self.pruning:
-            #self.function = self.prune_tree()
             self.function = TreePruner.DecisionTreePruner(self).prune_tree()
         return learning_metrics
     
@@ -233,7 +232,7 @@ class DecisionTree:
         for child in children:
             if child.children:
                 return True
-        # if all children are leaves, then node is not a grandparent   
+        # if all children are leaves, then node is not a grandparent
         self.non_grandparents.append(node.id)
         return False
 

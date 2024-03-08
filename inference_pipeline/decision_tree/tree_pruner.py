@@ -4,6 +4,7 @@ from math import isnan
 import configparser
 from inference_pipeline.decision_tree import node as TreeNode
 from training_pipeline import evaluator as __evaluator__
+from inference_pipeline.decision_tree import tree_visualizer as TreeVisualizer
 
 
 class DecisionTreePruner():
@@ -13,7 +14,7 @@ class DecisionTreePruner():
         self.prediction_type = meta_tree.prediction_type # get the prediction type
         self.non_grandparents = meta_tree.non_grandparents # initialize list of non-grandparent nodes
         self.num_nodes_before_pruning = meta_tree.num_nodes_before_pruning # initialize number of nodes before pruning
-        self.num_nodes_after_pruning = 0 # initialize number of nodes after pruning
+        self.num_nodes_after_pruning = 1 # initialize number of nodes after pruning
         # initialize max depth before pruning and after pruning
         self.max_depth_before_pruning = self.find_max_depth(self.tree)
         self.max_depth_after_pruning = None
@@ -26,6 +27,11 @@ class DecisionTreePruner():
         self.predict = meta_tree.predict # get the predict function
         self.is_grandparent = meta_tree.is_grandparent # get the is_grandparent function
         self.evaluator = __evaluator__.Evaluator(meta_tree, self.metrics_for_pruning()) # initialize the evaluator class
+
+        # # for debugging only 
+        # self.column_names = meta_tree.column_names
+        # self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'before_pruning.gv')
+        # self.visualizer.draw_tree(self.tree) # before pruning
 
     def set_eval_metric(self):
         # set the metric name and operator based on prediction type
@@ -95,7 +101,9 @@ class DecisionTreePruner():
             for child in root.children:
                 self.post_order_traversal(child)
             root.grandparent = self.is_grandparent(root, root.children)
-            self.num_nodes_after_pruning += 1
+            # if the node is not a grandparent and has not been visited, add it to the list of non-grandparents
+            if not root.grandparent and root.visited == False:
+                self.non_grandparents.append(root.id)
         return None
     
     def update_non_grandparents(self, root):
@@ -107,6 +115,13 @@ class DecisionTreePruner():
         if (current_non_grandparents != new_non_grandparents) and (len(new_non_grandparents) > 0):
             return True
         return False
+    
+    def count_nodes(self, root):
+        if root.children:
+            for child in root.children:
+                self.num_nodes_after_pruning += 1
+                self.count_nodes(child)
+        return None
     
     def print_stats(self):
         print(f'        Number of nodes --> before pruning: {self.num_nodes_before_pruning}, after pruning: {self.num_nodes_after_pruning}')
@@ -137,6 +152,7 @@ class DecisionTreePruner():
                 node.feature = None
                 node.threshold = None
                 node.grandparent = None
+                node.visited = True
                 # test new tree on validation set
                 y_pred = self.predict(x_val, new_tree)
                 # evaluate performance of new tree
@@ -145,11 +161,21 @@ class DecisionTreePruner():
                 if (not isnan(metric)) and (self.ops[self.op](metric, self.metric)):
                     self.tree = new_tree
                     self.metric = metric
-            # reset the number of nodes after pruning (will be recalculated in post_order_traversal)
-            self.num_nodes_after_pruning = 0
+                    # otherwise, mark the node as visited in original tree
+                else:
+                    node = self.search_node(non_grandparent, self.tree)
+                    node.visited = True
              # after pruning, update the list of non-grandparent nodes
             keep_pruning = self.update_non_grandparents(self.tree)
         # calculate new max depth after pruning
         self.max_depth_after_pruning = self.find_max_depth(self.tree)
+        # recalculate new number of nodes after pruning
+        self.count_nodes(self.tree)
         self.print_stats() # print stats of pruning 
+
+        # # for debugging only
+        # self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'after_pruning.gv')
+        # self.visualizer.draw_tree(self.tree) # before pruning
+
+
         return self.tree
