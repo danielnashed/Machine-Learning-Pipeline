@@ -64,6 +64,9 @@ class DecisionTree:
         self.max_depth = float('inf') # maximum depth of the decision tree (default = infinity)
         self.pruning = False # whether to perform pruning on the decision tree
         self.validation_set = None # validation set for pruning
+        # dictionary to map operator based on split criterion condition
+        self.ops = {'>': operator.gt, '<': operator.lt}
+        self.op = None # operator based on split criterion condition
         sys.setrecursionlimit(3000) # set recursion limit to 3000 for large datasets
 
     """
@@ -94,8 +97,10 @@ class DecisionTree:
         # select split criterion based on either classification or regression
         if self.prediction_type == 'classification':
             self.split_criterion = self.gain_ratio
+            self.op = '>'
         elif self.prediction_type == 'regression':
             self.split_criterion = self.squared_error
+            self.op = '<'
         # initialize the root node of the decision tree 
         root = TreeNode.Node(data, id=self.id)
         # add root node id to list of nodes
@@ -126,17 +131,34 @@ class DecisionTree:
     def optimal_split_value(self, data, feature):
         data = copy.deepcopy(data) # create a copy of the data 
         data = data.sort_values(feature) # sort the data by the feature
-        class_label = data['target'].iloc[0] # get first class label in dataset
-        best_gain_ratio = float('-inf') # initialize best gain ratio
         best_split_value = None # initialize best split value
-        for i in range(len(data)):
-            # if class label changes, compute gain ratio at the split point
-            if data['target'].iloc[i] != class_label:
-                class_label = data['target'].iloc[i] # update class label
-                split_value = (data[feature].iloc[i] + data[feature].iloc[i-1])/2
-                gain_ratio = self.gain(data, feature, split_value) / self.split_info(data, feature, split_value)
-                if gain_ratio > best_gain_ratio:
-                    best_gain_ratio = gain_ratio
+        # if classification, iterate over all data and compute the gain ratio at each split point where class label changes
+        if self.prediction_type == 'classification':
+            best_gain_ratio = float('-inf')
+            class_label = data['target'].iloc[0] # get first class label in dataset
+            for i in range(len(data)):
+                # if class label changes
+                if data['target'].iloc[i] != class_label:
+                    class_label = data['target'].iloc[i] # update class label
+                    split_value = (data[feature].iloc[i] + data[feature].iloc[i-1])/2
+                    gain_ratio = self.gain_ratio(data, feature, split_value)
+                    if gain_ratio > best_gain_ratio:
+                        best_gain_ratio = gain_ratio
+                        best_split_value = split_value
+        # if regression, discretize the feature into 4 bins and compute the squared error at each split point between the bins
+        elif self.prediction_type == 'regression':
+            best_mse = float('inf')
+            # discretize the feature into 4 bins
+            #bins = np.array_split(data[feature], 4)
+            bins = pd.cut(data[feature], bins=4)
+            for i in range(3):
+                left = bins.cat.categories[i].right # get the right edge of the left bin
+                right = bins.cat.categories[i+1].left # get the left edge of the right bin
+                split_value = (left + right)/2
+                #split_value = (bins[i].max() + bins[i+1].min())/2
+                mse = self.squared_error(data, feature, split_value)
+                if mse < best_mse:
+                    best_mse = mse
                     best_split_value = split_value
         return best_split_value
 
@@ -252,15 +274,10 @@ class DecisionTree:
     Returns:
         gain_ratio (float): gain ratio of the dataset
     """
-    def gain_ratio(self, data, feature):
+    def gain_ratio(self, data, feature, split_value):
         # if all values of the feature are the same, then return very small gain ratio
         if len(data[feature].unique()) == 1:
             return float('-inf')
-        # if feature is continous, determine the split point that maximizes the gain ratio
-        if data[feature].dtype != 'object':
-            split_value = self.optimal_split_value(data, feature)
-        else:
-            split_value = None
         gain_ratio = self.gain(data, feature, split_value) / self.split_info(data, feature, split_value)
         return gain_ratio
     
@@ -275,7 +292,7 @@ class DecisionTree:
     Returns:
         squared_error (float): squared error of the dataset
     """
-    def squared_error(self, data, feature):
+    def squared_error(self, data, feature, split_value):
         # if all values of the feature are the same, then return very large error
         if len(data[feature].unique()) == 1:
             return float('inf')
@@ -291,9 +308,8 @@ class DecisionTree:
                 branch_predictions.append(subset['target'].mode()[0])
         # if feature is continuous, make a binary split at optimal value of feature
         else:
-            mean = data[feature].mean()
-            subset1 = data[data[feature] < mean]
-            subset2 = data[data[feature] >= mean]
+            subset1 = data[data[feature] < split_value]
+            subset2 = data[data[feature] >= split_value]
             branches = [subset1, subset2]
             # prediction for each subset is mean of target variable in the subset
             branch_predictions = [subset1['target'].mean(), subset2['target'].mean()]
@@ -340,19 +356,23 @@ class DecisionTree:
         best_feature (string): best feature to split on
     """
     def select_best_feature(self, data):
-        # dictionary to map operator based on split criterion condition
-        ops = {'>': operator.gt, '<': operator.lt}
-        op = '>' if self.split_criterion == self.gain_ratio else '<'
         best_feature = None
+        best_split_value = None
         # set best_criterion to negative infinity if gain ratio is used, otherwise set to positive infinity
         best_criterion = float('-inf') if self.split_criterion == self.gain_ratio else float('inf')
         # for each feature in the data, calculate the split criterion and select the best feature
         for feature in data.columns[:-1]:
-            criterion = self.split_criterion(data, feature)
-            if ops[op](criterion, best_criterion): # if criterion is better than best_criterion
+            # if feature is continous, determine the optimal binary split value
+            if data[feature].dtype != 'object':
+                split_value = self.optimal_split_value(data, feature)
+            else:
+                split_value = None
+            criterion = self.split_criterion(data, feature, split_value)
+            if self.ops[self.op](criterion, best_criterion): # if criterion is better than best_criterion
                 best_criterion = criterion
                 best_feature = feature
-        return best_feature
+                best_split_value = split_value
+        return (best_feature, best_split_value)
     
     """
     'split_into_children' method is responsible for splitting the data into children based on the best
@@ -367,7 +387,7 @@ class DecisionTree:
         children_ids (list): list of children node ids
         threshold (float): threshold for the feature
     """
-    def split_into_children(self, node, feature):
+    def split_into_children(self, node, feature, split_value):
         children = []
         children_ids = []
         # if feature is categorical, make a split for each unique value of the feature
@@ -382,11 +402,10 @@ class DecisionTree:
                 children.append(TreeNode.Node(copy.deepcopy(subset), id=self.id))
         # if feature is continuous, make a binary split at optimal value of feature
         else:
-            mean = node.data[feature].mean()
-            threshold = mean
-            subset1 = node.data[node.data[feature] < mean]
+            threshold = split_value
+            subset1 = node.data[node.data[feature] < split_value]
             subset1 = subset1.drop(feature, axis=1) # drop the feature from the subset
-            subset2 = node.data[node.data[feature] >= mean]
+            subset2 = node.data[node.data[feature] >= split_value]
             subset2 = subset2.drop(feature, axis=1) # drop the feature from the subset
             self.id += 1
             children_ids.append(self.id)
@@ -431,12 +450,12 @@ class DecisionTree:
         if self.is_base_case(root):
             return root
         # find the best feature to split on
-        best_feature = self.select_best_feature(root.data)
+        best_feature, best_split_value = self.select_best_feature(root.data)
         # if no best feature found, then return node
         if best_feature is None:
             return root
         # split the data in the root into children based on the best feature
-        children, children_ids, threshold = self.split_into_children(root, best_feature)
+        children, children_ids, threshold = self.split_into_children(root, best_feature, best_split_value)
         root.children = children
         root.feature = best_feature
         root.feature_name = self.column_names[best_feature]

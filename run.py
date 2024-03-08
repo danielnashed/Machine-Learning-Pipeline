@@ -6,13 +6,22 @@ from feature_pipeline import data_transformer
 from training_pipeline import learner, evaluator, dashboard
 from inference_pipeline import model as model_selector
 
+"""
+This module contains the Pipeline class which is used to orchestrate the entire end-to-end
+pipeline to train a model or run inference on a model.
 
-# [description] this is the main class that orchestrates the entire end-to-end pipeline to 
-# train a model or run inference on a model.
-#
-# [input] is config dictionary to specify model, dataset, mode, and cross validation splits
-# [output] is None
-#
+The Pipeline class contains the following attributes:
+    - model: the model to use
+    - data: the data in the dataset
+    - mode: the mode of the pipeline (training or inference)
+    - splits: the number of cross validation splits
+    - output: the output directory to store all exported files during pipeline execution
+
+The Pipeline class contains the following methods:
+    - load_config: process the config dictionary
+    - _build_pipeline: build the pipeline
+    - run: run the pipeline
+"""
 class Pipeline:
     def __init__(self, config):
         self.model, self.data, self.mode, self.splits, self.output = self.load_config(config)
@@ -90,7 +99,7 @@ class Pipeline:
 def main():
     config = {
         'model': 'decision_tree',       # choose from 'null_model', 'knn', 'condensed_knn', 'decision_tree'
-        'dataset': 'breast-cancer-wisconsin', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
+        'dataset': 'forestfires', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
         'mode': 'training',          # choose from 'training', 'inference'
         'cross_validation_splits': 5 # number of experiments 'k' to run k x 2 cross validation
     }
