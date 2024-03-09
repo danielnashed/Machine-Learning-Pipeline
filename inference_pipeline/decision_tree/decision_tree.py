@@ -5,6 +5,7 @@ import numpy as np
 import sys
 from inference_pipeline.decision_tree import node as TreeNode
 from inference_pipeline.decision_tree import tree_pruner as TreePruner
+from inference_pipeline.decision_tree import tree_visualizer as TreeVisualizer
 
 """
 This module contains the DecisionTree class which is used to create a decision tree for training
@@ -145,6 +146,9 @@ class DecisionTree:
                     if gain_ratio > best_gain_ratio:
                         best_gain_ratio = gain_ratio
                         best_split_value = split_value
+            # if class label never changed, then select mean of feature by default
+            if best_split_value == None:
+                best_split_value = data[feature].mean()
         # if regression, discretize the feature into 4 bins and compute the squared error at each split point between the bins
         elif self.prediction_type == 'regression':
             best_mse = float('inf')
@@ -278,6 +282,9 @@ class DecisionTree:
         # if all values of the feature are the same, then return very small gain ratio
         if len(data[feature].unique()) == 1:
             return float('-inf')
+        # if all values of feature lie on same side of split value, then return very small gain ratio
+        if split_value is not None and all(data[feature].unique() >= split_value):
+            return float('-inf')
         gain_ratio = self.gain(data, feature, split_value) / self.split_info(data, feature, split_value)
         return gain_ratio
     
@@ -365,6 +372,7 @@ class DecisionTree:
             # if feature is continous, determine the optimal binary split value
             if data[feature].dtype != 'object':
                 split_value = self.optimal_split_value(data, feature)
+                #split_value = data[feature].mean()
             else:
                 split_value = None
             criterion = self.split_criterion(data, feature, split_value)
@@ -407,6 +415,8 @@ class DecisionTree:
             subset1 = subset1.drop(feature, axis=1) # drop the feature from the subset
             subset2 = node.data[node.data[feature] >= split_value]
             subset2 = subset2.drop(feature, axis=1) # drop the feature from the subset
+            if subset1.empty or subset2.empty:
+                debug = ''
             self.id += 1
             children_ids.append(self.id)
             children.append(TreeNode.Node(copy.deepcopy(subset1), id=self.id))

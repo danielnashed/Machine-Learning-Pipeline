@@ -267,7 +267,7 @@ class DecisionTreePruner():
         self.count_nodes(self.tree)
         self.print_stats() # print stats of pruning 
 
-        # # for debugging only
+        # #for debugging only
         # self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'after_pruning.gv')
         # self.visualizer.draw_tree(self.tree) # before pruning
 

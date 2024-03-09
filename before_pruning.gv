@@ -1,956 +1,227 @@
 digraph {
-	"safety
-['low', 'med', 'high']_5365293440" [label="safety
-['low', 'med', 'high']"]
-	unacc_5354005440 [label=unacc fillcolor=lightblue style=filled]
-	"safety
-['low', 'med', 'high']_5365293440" -> unacc_5354005440
-	"persons
-['4', '2', 'more']_5353997904" [label="persons
-['4', '2', 'more']"]
-	"safety
-['low', 'med', 'high']_5365293440" -> "persons
-['4', '2', 'more']_5353997904"
-	"persons
-['4', '2', 'more']_5353997904" [label="persons
-['4', '2', 'more']"]
-	"buying
-['med', 'high', 'low', 'vhigh']_5360935872" [label="buying
-['med', 'high', 'low', 'vhigh']"]
-	"persons
-['4', '2', 'more']_5353997904" -> "buying
-['med', 'high', 'low', 'vhigh']_5360935872"
-	"buying
-['med', 'high', 'low', 'vhigh']_5360935872" [label="buying
-['med', 'high', 'low', 'vhigh']"]
-	"maint
-['vhigh', 'med', 'high', 'low']_5360935968" [label="maint
-['vhigh', 'med', 'high', 'low']"]
-	"buying
-['med', 'high', 'low', 'vhigh']_5360935872" -> "maint
-['vhigh', 'med', 'high', 'low']_5360935968"
-	"maint
-['vhigh', 'med', 'high', 'low']_5360935968" [label="maint
-['vhigh', 'med', 'high', 'low']"]
-	"doors
-['5more', '3', '2']_5350986560" [label="doors
-['5more', '3', '2']"]
-	"maint
-['vhigh', 'med', 'high', 'low']_5360935968" -> "doors
-['5more', '3', '2']_5350986560"
-	"doors
-['5more', '3', '2']_5350986560" [label="doors
-['5more', '3', '2']"]
-	acc_5358659216 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['5more', '3', '2']_5350986560" -> acc_5358659216
-	unacc_5358657248 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['5more', '3', '2']_5350986560" -> unacc_5358657248
-	"lug_boot
-['big', 'small']_5358657632" [label="lug_boot
-['big', 'small']"]
-	"doors
-['5more', '3', '2']_5350986560" -> "lug_boot
-['big', 'small']_5358657632"
-	"lug_boot
-['big', 'small']_5358657632" [label="lug_boot
-['big', 'small']"]
-	acc_5358982624 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'small']_5358657632" -> acc_5358982624
-	unacc_5358993184 [label=unacc fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'small']_5358657632" -> unacc_5358993184
-	acc_5350991600 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'med', 'high', 'low']_5360935968" -> acc_5350991600
-	"doors
-['4', '5more', '2']_5350990208" [label="doors
-['4', '5more', '2']"]
-	"maint
-['vhigh', 'med', 'high', 'low']_5360935968" -> "doors
-['4', '5more', '2']_5350990208"
-	"doors
-['4', '5more', '2']_5350990208" [label="doors
-['4', '5more', '2']"]
-	acc_5363775824 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['4', '5more', '2']_5350990208" -> acc_5363775824
-	acc_5353898544 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['4', '5more', '2']_5350990208" -> acc_5353898544
-	unacc_5353908528 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['4', '5more', '2']_5350990208" -> unacc_5353908528
-	"lug_boot
-['med', 'big', 'small']_5350992896" [label="lug_boot
-['med', 'big', 'small']"]
-	"maint
-['vhigh', 'med', 'high', 'low']_5360935968" -> "lug_boot
-['med', 'big', 'small']_5350992896"
-	"lug_boot
-['med', 'big', 'small']_5350992896" [label="lug_boot
-['med', 'big', 'small']"]
-	good_5353909200 [label=good fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'big', 'small']_5350992896" -> good_5353909200
-	good_5353913136 [label=good fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'big', 'small']_5350992896" -> good_5353913136
-	acc_5360329328 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'big', 'small']_5350992896" -> acc_5360329328
-	"maint
-['med', 'high', 'vhigh', 'low']_5359127584" [label="maint
-['med', 'high', 'vhigh', 'low']"]
-	"buying
-['med', 'high', 'low', 'vhigh']_5360935872" -> "maint
-['med', 'high', 'vhigh', 'low']_5359127584"
-	"maint
-['med', 'high', 'vhigh', 'low']_5359127584" [label="maint
-['med', 'high', 'vhigh', 'low']"]
-	acc_5363234096 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'vhigh', 'low']_5359127584" -> acc_5363234096
-	"lug_boot
-['med', 'small', 'big']_5363227856" [label="lug_boot
-['med', 'small', 'big']"]
-	"maint
-['med', 'high', 'vhigh', 'low']_5359127584" -> "lug_boot
-['med', 'small', 'big']_5363227856"
-	"lug_boot
-['med', 'small', 'big']_5363227856" [label="lug_boot
-['med', 'small', 'big']"]
-	"doors
-['3', '2', '5more']_5356340240" [label="doors
-['3', '2', '5more']"]
-	"lug_boot
-['med', 'small', 'big']_5363227856" -> "doors
-['3', '2', '5more']_5356340240"
-	"doors
-['3', '2', '5more']_5356340240" [label="doors
-['3', '2', '5more']"]
-	unacc_5367461888 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['3', '2', '5more']_5356340240" -> unacc_5367461888
-	unacc_5367451616 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['3', '2', '5more']_5356340240" -> unacc_5367451616
-	acc_5367454160 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['3', '2', '5more']_5356340240" -> acc_5367454160
-	unacc_5356346672 [label=unacc fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'small', 'big']_5363227856" -> unacc_5356346672
-	acc_5356349648 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'small', 'big']_5363227856" -> acc_5356349648
-	unacc_5363221424 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'vhigh', 'low']_5359127584" -> unacc_5363221424
-	"lug_boot
-['small', 'big']_5363224448" [label="lug_boot
-['small', 'big']"]
-	"maint
-['med', 'high', 'vhigh', 'low']_5359127584" -> "lug_boot
-['small', 'big']_5363224448"
-	"lug_boot
-['small', 'big']_5363224448" [label="lug_boot
-['small', 'big']"]
-	unacc_5368101776 [label=unacc fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'big']_5363224448" -> unacc_5368101776
-	acc_5368086656 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'big']_5363224448" -> acc_5368086656
-	"lug_boot
-['med', 'small', 'big']_5359125664" [label="lug_boot
-['med', 'small', 'big']"]
-	"buying
-['med', 'high', 'low', 'vhigh']_5360935872" -> "lug_boot
-['med', 'small', 'big']_5359125664"
-	"lug_boot
-['med', 'small', 'big']_5359125664" [label="lug_boot
-['med', 'small', 'big']"]
-	"maint
-['high', 'vhigh', 'med', 'low']_5370313280" [label="maint
-['high', 'vhigh', 'med', 'low']"]
-	"lug_boot
-['med', 'small', 'big']_5359125664" -> "maint
-['high', 'vhigh', 'med', 'low']_5370313280"
-	"maint
-['high', 'vhigh', 'med', 'low']_5370313280" [label="maint
-['high', 'vhigh', 'med', 'low']"]
-	acc_5370310640 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['high', 'vhigh', 'med', 'low']_5370313280" -> acc_5370310640
-	"doors
-['3', '4', '5more']_5370298832" [label="doors
-['3', '4', '5more']"]
-	"maint
-['high', 'vhigh', 'med', 'low']_5370313280" -> "doors
-['3', '4', '5more']_5370298832"
-	"doors
-['3', '4', '5more']_5370298832" [label="doors
-['3', '4', '5more']"]
-	unacc_5355878304 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['3', '4', '5more']_5370298832" -> unacc_5355878304
-	acc_5355878400 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['3', '4', '5more']_5370298832" -> acc_5355878400
-	acc_5355879456 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['3', '4', '5more']_5370298832" -> acc_5355879456
-	acc_5370304016 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['high', 'vhigh', 'med', 'low']_5370313280" -> acc_5370304016
-	acc_5355877920 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['high', 'vhigh', 'med', 'low']_5370313280" -> acc_5355877920
-	"maint
-['med', 'vhigh', 'low']_5370308528" [label="maint
-['med', 'vhigh', 'low']"]
-	"lug_boot
-['med', 'small', 'big']_5359125664" -> "maint
-['med', 'vhigh', 'low']_5370308528"
-	"maint
-['med', 'vhigh', 'low']_5370308528" [label="maint
-['med', 'vhigh', 'low']"]
-	acc_5349124688 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['med', 'vhigh', 'low']_5370308528" -> acc_5349124688
-	unacc_5363858896 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['med', 'vhigh', 'low']_5370308528" -> unacc_5363858896
-	acc_5363851216 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['med', 'vhigh', 'low']_5370308528" -> acc_5363851216
-	"maint
-['med', 'high', 'low', 'vhigh']_5370313232" [label="maint
-['med', 'high', 'low', 'vhigh']"]
-	"lug_boot
-['med', 'small', 'big']_5359125664" -> "maint
-['med', 'high', 'low', 'vhigh']_5370313232"
-	"maint
-['med', 'high', 'low', 'vhigh']_5370313232" [label="maint
-['med', 'high', 'low', 'vhigh']"]
-	good_5363847472 [label=good fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'low', 'vhigh']_5370313232" -> good_5363847472
-	acc_5363846368 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'low', 'vhigh']_5370313232" -> acc_5363846368
-	good_5363845024 [label=good fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'low', 'vhigh']_5370313232" -> good_5363845024
-	acc_5363856304 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'low', 'vhigh']_5370313232" -> acc_5363856304
-	"lug_boot
-['med', 'small', 'big']_5359133392" [label="lug_boot
-['med', 'small', 'big']"]
-	"buying
-['med', 'high', 'low', 'vhigh']_5360935872" -> "lug_boot
-['med', 'small', 'big']_5359133392"
-	"lug_boot
-['med', 'small', 'big']_5359133392" [label="lug_boot
-['med', 'small', 'big']"]
-	"doors
-['5more', '4', '2']_5363845744" [label="doors
-['5more', '4', '2']"]
-	"lug_boot
-['med', 'small', 'big']_5359133392" -> "doors
-['5more', '4', '2']_5363845744"
-	"doors
-['5more', '4', '2']_5363845744" [label="doors
-['5more', '4', '2']"]
-	"maint
-['med', 'high']_5363844784" [label="maint
-['med', 'high']"]
-	"doors
-['5more', '4', '2']_5363845744" -> "maint
-['med', 'high']_5363844784"
-	"maint
-['med', 'high']_5363844784" [label="maint
-['med', 'high']"]
-	acc_5363847088 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['med', 'high']_5363844784" -> acc_5363847088
-	unacc_5360827328 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['med', 'high']_5363844784" -> unacc_5360827328
-	acc_5363857840 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['5more', '4', '2']_5363845744" -> acc_5363857840
-	unacc_5363852512 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['5more', '4', '2']_5363845744" -> unacc_5363852512
-	unacc_5363849824 [label=unacc fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'small', 'big']_5359133392" -> unacc_5363849824
-	"maint
-['high', 'low']_5363854288" [label="maint
-['high', 'low']"]
-	"lug_boot
-['med', 'small', 'big']_5359133392" -> "maint
-['high', 'low']_5363854288"
-	"maint
-['high', 'low']_5363854288" [label="maint
-['high', 'low']"]
-	unacc_5363059840 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['high', 'low']_5363854288" -> unacc_5363059840
-	acc_5363060080 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['high', 'low']_5363854288" -> acc_5363060080
-	unacc_5360929824 [label=unacc fillcolor=lightblue style=filled]
-	"persons
-['4', '2', 'more']_5353997904" -> unacc_5360929824
-	"buying
-['med', 'vhigh', 'low', 'high']_5360758096" [label="buying
-['med', 'vhigh', 'low', 'high']"]
-	"persons
-['4', '2', 'more']_5353997904" -> "buying
-['med', 'vhigh', 'low', 'high']_5360758096"
-	"buying
-['med', 'vhigh', 'low', 'high']_5360758096" [label="buying
-['med', 'vhigh', 'low', 'high']"]
-	"maint
-['low', 'vhigh', 'med', 'high']_5351188784" [label="maint
-['low', 'vhigh', 'med', 'high']"]
-	"buying
-['med', 'vhigh', 'low', 'high']_5360758096" -> "maint
-['low', 'vhigh', 'med', 'high']_5351188784"
-	"maint
-['low', 'vhigh', 'med', 'high']_5351188784" [label="maint
-['low', 'vhigh', 'med', 'high']"]
-	"lug_boot
-['med', 'small', 'big']_5362842512" [label="lug_boot
-['med', 'small', 'big']"]
-	"maint
-['low', 'vhigh', 'med', 'high']_5351188784" -> "lug_boot
-['med', 'small', 'big']_5362842512"
-	"lug_boot
-['med', 'small', 'big']_5362842512" [label="lug_boot
-['med', 'small', 'big']"]
-	good_5360524976 [label=good fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'small', 'big']_5362842512" -> good_5360524976
-	acc_5360528096 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'small', 'big']_5362842512" -> acc_5360528096
-	good_5367204608 [label=good fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'small', 'big']_5362842512" -> good_5367204608
-	"lug_boot
-['small', 'big', 'med']_5362831616" [label="lug_boot
-['small', 'big', 'med']"]
-	"maint
-['low', 'vhigh', 'med', 'high']_5351188784" -> "lug_boot
-['small', 'big', 'med']_5362831616"
-	"lug_boot
-['small', 'big', 'med']_5362831616" [label="lug_boot
-['small', 'big', 'med']"]
-	unacc_5367207920 [label=unacc fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'big', 'med']_5362831616" -> unacc_5367207920
-	acc_5367207152 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'big', 'med']_5362831616" -> acc_5367207152
-	acc_5367204368 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'big', 'med']_5362831616" -> acc_5367204368
-	acc_5362828256 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['low', 'vhigh', 'med', 'high']_5351188784" -> acc_5362828256
-	"doors
-['2', '5more']_5362829888" [label="doors
-['2', '5more']"]
-	"maint
-['low', 'vhigh', 'med', 'high']_5351188784" -> "doors
-['2', '5more']_5362829888"
-	"doors
-['2', '5more']_5362829888" [label="doors
-['2', '5more']"]
-	unacc_5367214112 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['2', '5more']_5362829888" -> unacc_5367214112
-	acc_5367203936 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['2', '5more']_5362829888" -> acc_5367203936
-	"maint
-['vhigh', 'high', 'low']_5352431856" [label="maint
-['vhigh', 'high', 'low']"]
-	"buying
-['med', 'vhigh', 'low', 'high']_5360758096" -> "maint
-['vhigh', 'high', 'low']_5352431856"
-	"maint
-['vhigh', 'high', 'low']_5352431856" [label="maint
-['vhigh', 'high', 'low']"]
-	unacc_5367212528 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'high', 'low']_5352431856" -> unacc_5367212528
-	unacc_5365325968 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'high', 'low']_5352431856" -> unacc_5365325968
-	"lug_boot
-['small', 'med', 'big']_5365327504" [label="lug_boot
-['small', 'med', 'big']"]
-	"maint
-['vhigh', 'high', 'low']_5352431856" -> "lug_boot
-['small', 'med', 'big']_5365327504"
-	"lug_boot
-['small', 'med', 'big']_5365327504" [label="lug_boot
-['small', 'med', 'big']"]
-	unacc_5365327024 [label=unacc fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'med', 'big']_5365327504" -> unacc_5365327024
-	"doors
-['2', '3']_5365318288" [label="doors
-['2', '3']"]
-	"lug_boot
-['small', 'med', 'big']_5365327504" -> "doors
-['2', '3']_5365318288"
-	"doors
-['2', '3']_5365318288" [label="doors
-['2', '3']"]
-	unacc_5370820896 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['2', '3']_5365318288" -> unacc_5370820896
-	acc_5370808512 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['2', '3']_5365318288" -> acc_5370808512
-	acc_5365322080 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'med', 'big']_5365327504" -> acc_5365322080
-	"maint
-['low', 'med', 'high', 'vhigh']_5352431040" [label="maint
-['low', 'med', 'high', 'vhigh']"]
-	"buying
-['med', 'vhigh', 'low', 'high']_5360758096" -> "maint
-['low', 'med', 'high', 'vhigh']_5352431040"
-	"maint
-['low', 'med', 'high', 'vhigh']_5352431040" [label="maint
-['low', 'med', 'high', 'vhigh']"]
-	"doors
-['3', '4', '5more', '2']_5370809040" [label="doors
-['3', '4', '5more', '2']"]
-	"maint
-['low', 'med', 'high', 'vhigh']_5352431040" -> "doors
-['3', '4', '5more', '2']_5370809040"
-	"doors
-['3', '4', '5more', '2']_5370809040" [label="doors
-['3', '4', '5more', '2']"]
-	good_5370822480 [label=good fillcolor=lightblue style=filled]
-	"doors
-['3', '4', '5more', '2']_5370809040" -> good_5370822480
-	good_5370820224 [label=good fillcolor=lightblue style=filled]
-	"doors
-['3', '4', '5more', '2']_5370809040" -> good_5370820224
-	good_5370814704 [label=good fillcolor=lightblue style=filled]
-	"doors
-['3', '4', '5more', '2']_5370809040" -> good_5370814704
-	acc_5370812880 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['3', '4', '5more', '2']_5370809040" -> acc_5370812880
-	"lug_boot
-['big', 'small', 'med']_5370808272" [label="lug_boot
-['big', 'small', 'med']"]
-	"maint
-['low', 'med', 'high', 'vhigh']_5352431040" -> "lug_boot
-['big', 'small', 'med']_5370808272"
-	"lug_boot
-['big', 'small', 'med']_5370808272" [label="lug_boot
-['big', 'small', 'med']"]
-	good_5370822144 [label=good fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'small', 'med']_5370808272" -> good_5370822144
-	acc_5370809424 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'small', 'med']_5370808272" -> acc_5370809424
-	good_5370815280 [label=good fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'small', 'med']_5370808272" -> good_5370815280
-	acc_5370812208 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['low', 'med', 'high', 'vhigh']_5352431040" -> acc_5370812208
-	"doors
-['5more', '2', '3']_5370813696" [label="doors
-['5more', '2', '3']"]
-	"maint
-['low', 'med', 'high', 'vhigh']_5352431040" -> "doors
-['5more', '2', '3']_5370813696"
-	"doors
-['5more', '2', '3']_5370813696" [label="doors
-['5more', '2', '3']"]
-	unacc_5370818736 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['5more', '2', '3']_5370813696" -> unacc_5370818736
-	acc_5370819600 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['5more', '2', '3']_5370813696" -> acc_5370819600
-	acc_5368632128 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['5more', '2', '3']_5370813696" -> acc_5368632128
-	"lug_boot
-['big', 'med', 'small']_5352439392" [label="lug_boot
-['big', 'med', 'small']"]
-	"buying
-['med', 'vhigh', 'low', 'high']_5360758096" -> "lug_boot
-['big', 'med', 'small']_5352439392"
-	"lug_boot
-['big', 'med', 'small']_5352439392" [label="lug_boot
-['big', 'med', 'small']"]
-	"maint
-['high', 'med', 'vhigh', 'low']_5368634384" [label="maint
-['high', 'med', 'vhigh', 'low']"]
-	"lug_boot
-['big', 'med', 'small']_5352439392" -> "maint
-['high', 'med', 'vhigh', 'low']_5368634384"
-	"maint
-['high', 'med', 'vhigh', 'low']_5368634384" [label="maint
-['high', 'med', 'vhigh', 'low']"]
-	acc_5368627760 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['high', 'med', 'vhigh', 'low']_5368634384" -> acc_5368627760
-	acc_5368628720 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['high', 'med', 'vhigh', 'low']_5368634384" -> acc_5368628720
-	unacc_5368642304 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['high', 'med', 'vhigh', 'low']_5368634384" -> unacc_5368642304
-	acc_5368634624 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['high', 'med', 'vhigh', 'low']_5368634384" -> acc_5368634624
-	"doors
-['2', '4', '3']_5368627904" [label="doors
-['2', '4', '3']"]
-	"lug_boot
-['big', 'med', 'small']_5352439392" -> "doors
-['2', '4', '3']_5368627904"
-	"doors
-['2', '4', '3']_5368627904" [label="doors
-['2', '4', '3']"]
-	unacc_5368636496 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['2', '4', '3']_5368627904" -> unacc_5368636496
-	acc_5368631600 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['2', '4', '3']_5368627904" -> acc_5368631600
-	acc_5368639856 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['2', '4', '3']_5368627904" -> acc_5368639856
-	unacc_5368630688 [label=unacc fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'med', 'small']_5352439392" -> unacc_5368630688
-	"persons
-['2', '4', 'more']_5354006112" [label="persons
-['2', '4', 'more']"]
-	"safety
-['low', 'med', 'high']_5365293440" -> "persons
-['2', '4', 'more']_5354006112"
-	"persons
-['2', '4', 'more']_5354006112" [label="persons
-['2', '4', 'more']"]
-	unacc_5368639520 [label=unacc fillcolor=lightblue style=filled]
-	"persons
-['2', '4', 'more']_5354006112" -> unacc_5368639520
-	"buying
-['low', 'med', 'vhigh', 'high']_5370207104" [label="buying
-['low', 'med', 'vhigh', 'high']"]
-	"persons
-['2', '4', 'more']_5354006112" -> "buying
-['low', 'med', 'vhigh', 'high']_5370207104"
-	"buying
-['low', 'med', 'vhigh', 'high']_5370207104" [label="buying
-['low', 'med', 'vhigh', 'high']"]
-	"maint
-['vhigh', 'low', 'high', 'med']_5370207728" [label="maint
-['vhigh', 'low', 'high', 'med']"]
-	"buying
-['low', 'med', 'vhigh', 'high']_5370207104" -> "maint
-['vhigh', 'low', 'high', 'med']_5370207728"
-	"maint
-['vhigh', 'low', 'high', 'med']_5370207728" [label="maint
-['vhigh', 'low', 'high', 'med']"]
-	acc_5370205808 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'low', 'high', 'med']_5370207728" -> acc_5370205808
-	"lug_boot
-['big', 'small', 'med']_5370202112" [label="lug_boot
-['big', 'small', 'med']"]
-	"maint
-['vhigh', 'low', 'high', 'med']_5370207728" -> "lug_boot
-['big', 'small', 'med']_5370202112"
-	"lug_boot
-['big', 'small', 'med']_5370202112" [label="lug_boot
-['big', 'small', 'med']"]
-	vgood_5370209312 [label=vgood fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'small', 'med']_5370202112" -> vgood_5370209312
-	good_5364923328 [label=good fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'small', 'med']_5370202112" -> good_5364923328
-	good_5364920688 [label=good fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'small', 'med']_5370202112" -> good_5364920688
-	"lug_boot
-['small', 'med']_5370203408" [label="lug_boot
-['small', 'med']"]
-	"maint
-['vhigh', 'low', 'high', 'med']_5370207728" -> "lug_boot
-['small', 'med']_5370203408"
-	"lug_boot
-['small', 'med']_5370203408" [label="lug_boot
-['small', 'med']"]
-	acc_5364913200 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'med']_5370203408" -> acc_5364913200
-	vgood_5364915120 [label=vgood fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'med']_5370203408" -> vgood_5364915120
-	good_5370213392 [label=good fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'low', 'high', 'med']_5370207728" -> good_5370213392
-	"maint
-['low', 'high', 'vhigh', 'med']_5370210272" [label="maint
-['low', 'high', 'vhigh', 'med']"]
-	"buying
-['low', 'med', 'vhigh', 'high']_5370207104" -> "maint
-['low', 'high', 'vhigh', 'med']_5370210272"
-	"maint
-['low', 'high', 'vhigh', 'med']_5370210272" [label="maint
-['low', 'high', 'vhigh', 'med']"]
-	"lug_boot
-['med', 'big', 'small']_5364919056" [label="lug_boot
-['med', 'big', 'small']"]
-	"maint
-['low', 'high', 'vhigh', 'med']_5370210272" -> "lug_boot
-['med', 'big', 'small']_5364919056"
-	"lug_boot
-['med', 'big', 'small']_5364919056" [label="lug_boot
-['med', 'big', 'small']"]
-	"doors
-['4', '3']_5364914016" [label="doors
-['4', '3']"]
-	"lug_boot
-['med', 'big', 'small']_5364919056" -> "doors
-['4', '3']_5364914016"
-	"doors
-['4', '3']_5364914016" [label="doors
-['4', '3']"]
-	vgood_5364916608 [label=vgood fillcolor=lightblue style=filled]
-	"doors
-['4', '3']_5364914016" -> vgood_5364916608
-	good_5365173904 [label=good fillcolor=lightblue style=filled]
-	"doors
-['4', '3']_5364914016" -> good_5365173904
-	vgood_5364918576 [label=vgood fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'big', 'small']_5364919056" -> vgood_5364918576
-	good_5364916224 [label=good fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'big', 'small']_5364919056" -> good_5364916224
-	acc_5364923904 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['low', 'high', 'vhigh', 'med']_5370210272" -> acc_5364923904
-	acc_5364921216 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['low', 'high', 'vhigh', 'med']_5370210272" -> acc_5364921216
-	"lug_boot
-['small', 'big']_5364922944" [label="lug_boot
-['small', 'big']"]
-	"maint
-['low', 'high', 'vhigh', 'med']_5370210272" -> "lug_boot
-['small', 'big']_5364922944"
-	"lug_boot
-['small', 'big']_5364922944" [label="lug_boot
-['small', 'big']"]
-	acc_5365180240 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'big']_5364922944" -> acc_5365180240
-	vgood_5365178176 [label=vgood fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'big']_5364922944" -> vgood_5365178176
-	"maint
-['vhigh', 'low', 'med', 'high']_5370209840" [label="maint
-['vhigh', 'low', 'med', 'high']"]
-	"buying
-['low', 'med', 'vhigh', 'high']_5370207104" -> "maint
-['vhigh', 'low', 'med', 'high']_5370209840"
-	"maint
-['vhigh', 'low', 'med', 'high']_5370209840" [label="maint
-['vhigh', 'low', 'med', 'high']"]
-	unacc_5368212576 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'low', 'med', 'high']_5370209840" -> unacc_5368212576
-	acc_5368203264 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'low', 'med', 'high']_5370209840" -> acc_5368203264
-	acc_5368205328 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'low', 'med', 'high']_5370209840" -> acc_5368205328
-	unacc_5368202928 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'low', 'med', 'high']_5370209840" -> unacc_5368202928
-	"maint
-['vhigh', 'low', 'high', 'med']_5370205376" [label="maint
-['vhigh', 'low', 'high', 'med']"]
-	"buying
-['low', 'med', 'vhigh', 'high']_5370207104" -> "maint
-['vhigh', 'low', 'high', 'med']_5370205376"
-	"maint
-['vhigh', 'low', 'high', 'med']_5370205376" [label="maint
-['vhigh', 'low', 'high', 'med']"]
-	unacc_5368208784 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'low', 'high', 'med']_5370205376" -> unacc_5368208784
-	acc_5368201824 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'low', 'high', 'med']_5370205376" -> acc_5368201824
-	acc_5368215840 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'low', 'high', 'med']_5370205376" -> acc_5368215840
-	acc_5368216272 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'low', 'high', 'med']_5370205376" -> acc_5368216272
-	"buying
-['med', 'vhigh', 'high', 'low']_5370200960" [label="buying
-['med', 'vhigh', 'high', 'low']"]
-	"persons
-['2', '4', 'more']_5354006112" -> "buying
-['med', 'vhigh', 'high', 'low']_5370200960"
-	"buying
-['med', 'vhigh', 'high', 'low']_5370200960" [label="buying
-['med', 'vhigh', 'high', 'low']"]
-	"maint
-['med', 'high', 'vhigh', 'low']_5368203696" [label="maint
-['med', 'high', 'vhigh', 'low']"]
-	"buying
-['med', 'vhigh', 'high', 'low']_5370200960" -> "maint
-['med', 'high', 'vhigh', 'low']_5368203696"
-	"maint
-['med', 'high', 'vhigh', 'low']_5368203696" [label="maint
-['med', 'high', 'vhigh', 'low']"]
-	"lug_boot
-['big', 'med', 'small']_5368211280" [label="lug_boot
-['big', 'med', 'small']"]
-	"maint
-['med', 'high', 'vhigh', 'low']_5368203696" -> "lug_boot
-['big', 'med', 'small']_5368211280"
-	"lug_boot
-['big', 'med', 'small']_5368211280" [label="lug_boot
-['big', 'med', 'small']"]
-	vgood_5370632464 [label=vgood fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'med', 'small']_5368211280" -> vgood_5370632464
-	vgood_5370637744 [label=vgood fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'med', 'small']_5368211280" -> vgood_5370637744
-	acc_5370631360 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'med', 'small']_5368211280" -> acc_5370631360
-	acc_5370631552 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'vhigh', 'low']_5368203696" -> acc_5370631552
-	acc_5370634912 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'vhigh', 'low']_5368203696" -> acc_5370634912
-	vgood_5370642352 [label=vgood fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'vhigh', 'low']_5368203696" -> vgood_5370642352
-	"maint
-['low', 'high', 'vhigh', 'med']_5368201440" [label="maint
-['low', 'high', 'vhigh', 'med']"]
-	"buying
-['med', 'vhigh', 'high', 'low']_5370200960" -> "maint
-['low', 'high', 'vhigh', 'med']_5368201440"
-	"maint
-['low', 'high', 'vhigh', 'med']_5368201440" [label="maint
-['low', 'high', 'vhigh', 'med']"]
-	"doors
-['4', '3', '5more', '2']_5370727120" [label="doors
-['4', '3', '5more', '2']"]
-	"maint
-['low', 'high', 'vhigh', 'med']_5368201440" -> "doors
-['4', '3', '5more', '2']_5370727120"
-	"doors
-['4', '3', '5more', '2']_5370727120" [label="doors
-['4', '3', '5more', '2']"]
-	acc_5370739456 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['4', '3', '5more', '2']_5370727120" -> acc_5370739456
-	acc_5370729568 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['4', '3', '5more', '2']_5370727120" -> acc_5370729568
-	acc_5370731008 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['4', '3', '5more', '2']_5370727120" -> acc_5370731008
-	unacc_5370730240 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['4', '3', '5more', '2']_5370727120" -> unacc_5370730240
-	unacc_5370730096 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['low', 'high', 'vhigh', 'med']_5368201440" -> unacc_5370730096
-	unacc_5370733792 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['low', 'high', 'vhigh', 'med']_5368201440" -> unacc_5370733792
-	acc_5370737392 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['low', 'high', 'vhigh', 'med']_5368201440" -> acc_5370737392
-	"maint
-['vhigh', 'high', 'med', 'low']_5368215408" [label="maint
-['vhigh', 'high', 'med', 'low']"]
-	"buying
-['med', 'vhigh', 'high', 'low']_5370200960" -> "maint
-['vhigh', 'high', 'med', 'low']_5368215408"
-	"maint
-['vhigh', 'high', 'med', 'low']_5368215408" [label="maint
-['vhigh', 'high', 'med', 'low']"]
-	unacc_5370732400 [label=unacc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'high', 'med', 'low']_5368215408" -> unacc_5370732400
-	"lug_boot
-['med', 'big', 'small']_5370735616" [label="lug_boot
-['med', 'big', 'small']"]
-	"maint
-['vhigh', 'high', 'med', 'low']_5368215408" -> "lug_boot
-['med', 'big', 'small']_5370735616"
-	"lug_boot
-['med', 'big', 'small']_5370735616" [label="lug_boot
-['med', 'big', 'small']"]
-	acc_5370738160 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'big', 'small']_5370735616" -> acc_5370738160
-	acc_5370735232 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['med', 'big', 'small']_5370735616" -> acc_5370735232
-	"doors
-['4', '2']_5370731824" [label="doors
-['4', '2']"]
-	"lug_boot
-['med', 'big', 'small']_5370735616" -> "doors
-['4', '2']_5370731824"
-	"doors
-['4', '2']_5370731824" [label="doors
-['4', '2']"]
-	acc_5356218672 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['4', '2']_5370731824" -> acc_5356218672
-	unacc_5356217328 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['4', '2']_5370731824" -> unacc_5356217328
-	"lug_boot
-['big', 'med', 'small']_5370735952" [label="lug_boot
-['big', 'med', 'small']"]
-	"maint
-['vhigh', 'high', 'med', 'low']_5368215408" -> "lug_boot
-['big', 'med', 'small']_5370735952"
-	"lug_boot
-['big', 'med', 'small']_5370735952" [label="lug_boot
-['big', 'med', 'small']"]
-	acc_5351308992 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'med', 'small']_5370735952" -> acc_5351308992
-	acc_5351293344 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'med', 'small']_5370735952" -> acc_5351293344
-	"doors
-['2', '3']_5356981232" [label="doors
-['2', '3']"]
-	"lug_boot
-['big', 'med', 'small']_5370735952" -> "doors
-['2', '3']_5356981232"
-	"doors
-['2', '3']_5356981232" [label="doors
-['2', '3']"]
-	unacc_5356989488 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['2', '3']_5356981232" -> unacc_5356989488
-	acc_5356990544 [label=acc fillcolor=lightblue style=filled]
-	"doors
-['2', '3']_5356981232" -> acc_5356990544
-	acc_5370732064 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['vhigh', 'high', 'med', 'low']_5368215408" -> acc_5370732064
-	"maint
-['med', 'high', 'vhigh', 'low']_5368211232" [label="maint
-['med', 'high', 'vhigh', 'low']"]
-	"buying
-['med', 'vhigh', 'high', 'low']_5370200960" -> "maint
-['med', 'high', 'vhigh', 'low']_5368211232"
-	"maint
-['med', 'high', 'vhigh', 'low']_5368211232" [label="maint
-['med', 'high', 'vhigh', 'low']"]
-	"lug_boot
-['small', 'med', 'big']_5356982960" [label="lug_boot
-['small', 'med', 'big']"]
-	"maint
-['med', 'high', 'vhigh', 'low']_5368211232" -> "lug_boot
-['small', 'med', 'big']_5356982960"
-	"lug_boot
-['small', 'med', 'big']_5356982960" [label="lug_boot
-['small', 'med', 'big']"]
-	"doors
-['2', '3', '5more']_5356980848" [label="doors
-['2', '3', '5more']"]
-	"lug_boot
-['small', 'med', 'big']_5356982960" -> "doors
-['2', '3', '5more']_5356980848"
-	"doors
-['2', '3', '5more']_5356980848" [label="doors
-['2', '3', '5more']"]
-	unacc_5356979840 [label=unacc fillcolor=lightblue style=filled]
-	"doors
-['2', '3', '5more']_5356980848" -> unacc_5356979840
-	good_5356988624 [label=good fillcolor=lightblue style=filled]
-	"doors
-['2', '3', '5more']_5356980848" -> good_5356988624
-	good_5354088176 [label=good fillcolor=lightblue style=filled]
-	"doors
-['2', '3', '5more']_5356980848" -> good_5354088176
-	"doors
-['2', '5more']_5356992560" [label="doors
-['2', '5more']"]
-	"lug_boot
-['small', 'med', 'big']_5356982960" -> "doors
-['2', '5more']_5356992560"
-	"doors
-['2', '5more']_5356992560" [label="doors
-['2', '5more']"]
-	good_5367589744 [label=good fillcolor=lightblue style=filled]
-	"doors
-['2', '5more']_5356992560" -> good_5367589744
-	vgood_5367591280 [label=vgood fillcolor=lightblue style=filled]
-	"doors
-['2', '5more']_5356992560" -> vgood_5367591280
-	vgood_5356986848 [label=vgood fillcolor=lightblue style=filled]
-	"lug_boot
-['small', 'med', 'big']_5356982960" -> vgood_5356986848
-	"lug_boot
-['big', 'med', 'small']_5356985600" [label="lug_boot
-['big', 'med', 'small']"]
-	"maint
-['med', 'high', 'vhigh', 'low']_5368211232" -> "lug_boot
-['big', 'med', 'small']_5356985600"
-	"lug_boot
-['big', 'med', 'small']_5356985600" [label="lug_boot
-['big', 'med', 'small']"]
-	vgood_5367592960 [label=vgood fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'med', 'small']_5356985600" -> vgood_5367592960
-	vgood_5367580336 [label=vgood fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'med', 'small']_5356985600" -> vgood_5367580336
-	acc_5367585760 [label=acc fillcolor=lightblue style=filled]
-	"lug_boot
-['big', 'med', 'small']_5356985600" -> acc_5367585760
-	acc_5356984016 [label=acc fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'vhigh', 'low']_5368211232" -> acc_5356984016
-	vgood_5356989008 [label=vgood fillcolor=lightblue style=filled]
-	"maint
-['med', 'high', 'vhigh', 'low']_5368211232" -> vgood_5356989008
+	"Uniformity of Cell Shape
+4.0_5315639056" [label="Uniformity of Cell Shape
+4.0"]
+	"Mitoses
+2.5_5315630080" [label="Mitoses
+2.5"]
+	"Uniformity of Cell Shape
+4.0_5315639056" -> "Mitoses
+2.5_5315630080"
+	"Mitoses
+2.5_5315630080" [label="Mitoses
+2.5"]
+	"Clump Thickness
+7.0_5315274048" [label="Clump Thickness
+7.0"]
+	"Mitoses
+2.5_5315630080" -> "Clump Thickness
+7.0_5315274048"
+	"Clump Thickness
+7.0_5315274048" [label="Clump Thickness
+7.0"]
+	"Normal Nucleoli
+9.0_5316283136" [label="Normal Nucleoli
+9.0"]
+	"Clump Thickness
+7.0_5315274048" -> "Normal Nucleoli
+9.0_5316283136"
+	"Normal Nucleoli
+9.0_5316283136" [label="Normal Nucleoli
+9.0"]
+	"Single Epithelial Cell Size
+5.5_5316285776" [label="Single Epithelial Cell Size
+5.5"]
+	"Normal Nucleoli
+9.0_5316283136" -> "Single Epithelial Cell Size
+5.5_5316285776"
+	"Single Epithelial Cell Size
+5.5_5316285776" [label="Single Epithelial Cell Size
+5.5"]
+	"Bland Chromatin
+4.0_5316288176" [label="Bland Chromatin
+4.0"]
+	"Single Epithelial Cell Size
+5.5_5316285776" -> "Bland Chromatin
+4.0_5316288176"
+	"Bland Chromatin
+4.0_5316288176" [label="Bland Chromatin
+4.0"]
+	"Marginal Adhesion
+4.0_5316289376" [label="Marginal Adhesion
+4.0"]
+	"Bland Chromatin
+4.0_5316288176" -> "Marginal Adhesion
+4.0_5316289376"
+	"Marginal Adhesion
+4.0_5316289376" [label="Marginal Adhesion
+4.0"]
+	"2_5316284384" [label=2 fillcolor=lightblue style=filled]
+	"Marginal Adhesion
+4.0_5316289376" -> "2_5316284384"
+	"Uniformity of Cell Size
+2.0_5316288656" [label="Uniformity of Cell Size
+2.0"]
+	"Marginal Adhesion
+4.0_5316289376" -> "Uniformity of Cell Size
+2.0_5316288656"
+	"Uniformity of Cell Size
+2.0_5316288656" [label="Uniformity of Cell Size
+2.0"]
+	"2_5316292640" [label=2 fillcolor=lightblue style=filled]
+	"Uniformity of Cell Size
+2.0_5316288656" -> "2_5316292640"
+	"4_5316292304" [label=4 fillcolor=lightblue style=filled]
+	"Uniformity of Cell Size
+2.0_5316288656" -> "4_5316292304"
+	"Marginal Adhesion
+2.5_5316290192" [label="Marginal Adhesion
+2.5"]
+	"Bland Chromatin
+4.0_5316288176" -> "Marginal Adhesion
+2.5_5316290192"
+	"Marginal Adhesion
+2.5_5316290192" [label="Marginal Adhesion
+2.5"]
+	"Bare Nuclei
+3.0_5316294032" [label="Bare Nuclei
+3.0"]
+	"Marginal Adhesion
+2.5_5316290192" -> "Bare Nuclei
+3.0_5316294032"
+	"Bare Nuclei
+3.0_5316294032" [label="Bare Nuclei
+3.0"]
+	"2_5316543312" [label=2 fillcolor=lightblue style=filled]
+	"Bare Nuclei
+3.0_5316294032" -> "2_5316543312"
+	"Uniformity of Cell Size
+2.0_5316543648" [label="Uniformity of Cell Size
+2.0"]
+	"Bare Nuclei
+3.0_5316294032" -> "Uniformity of Cell Size
+2.0_5316543648"
+	"Uniformity of Cell Size
+2.0_5316543648" [label="Uniformity of Cell Size
+2.0"]
+	"2_5316543840" [label=2 fillcolor=lightblue style=filled]
+	"Uniformity of Cell Size
+2.0_5316543648" -> "2_5316543840"
+	"4_5316545184" [label=4 fillcolor=lightblue style=filled]
+	"Uniformity of Cell Size
+2.0_5316543648" -> "4_5316545184"
+	"4_5316295952" [label=4 fillcolor=lightblue style=filled]
+	"Marginal Adhesion
+2.5_5316290192" -> "4_5316295952"
+	"Uniformity of Cell Size
+2.0_5316285392" [label="Uniformity of Cell Size
+2.0"]
+	"Single Epithelial Cell Size
+5.5_5316285776" -> "Uniformity of Cell Size
+2.0_5316285392"
+	"Uniformity of Cell Size
+2.0_5316285392" [label="Uniformity of Cell Size
+2.0"]
+	"2_5316546816" [label=2 fillcolor=lightblue style=filled]
+	"Uniformity of Cell Size
+2.0_5316285392" -> "2_5316546816"
+	"4_5316546768" [label=4 fillcolor=lightblue style=filled]
+	"Uniformity of Cell Size
+2.0_5316285392" -> "4_5316546768"
+	"4_5316282656" [label=4 fillcolor=lightblue style=filled]
+	"Normal Nucleoli
+9.0_5316283136" -> "4_5316282656"
+	"4_5316282080" [label=4 fillcolor=lightblue style=filled]
+	"Clump Thickness
+7.0_5315274048" -> "4_5316282080"
+	"4_5315280720" [label=4 fillcolor=lightblue style=filled]
+	"Mitoses
+2.5_5315630080" -> "4_5315280720"
+	"Uniformity of Cell Size
+1.5_5315636608" [label="Uniformity of Cell Size
+1.5"]
+	"Uniformity of Cell Shape
+4.0_5315639056" -> "Uniformity of Cell Size
+1.5_5315636608"
+	"Uniformity of Cell Size
+1.5_5315636608" [label="Uniformity of Cell Size
+1.5"]
+	"2_5316548832" [label=2 fillcolor=lightblue style=filled]
+	"Uniformity of Cell Size
+1.5_5315636608" -> "2_5316548832"
+	"Bland Chromatin
+1.5_5316548256" [label="Bland Chromatin
+1.5"]
+	"Uniformity of Cell Size
+1.5_5315636608" -> "Bland Chromatin
+1.5_5316548256"
+	"Bland Chromatin
+1.5_5316548256" [label="Bland Chromatin
+1.5"]
+	"2_5316551040" [label=2 fillcolor=lightblue style=filled]
+	"Bland Chromatin
+1.5_5316548256" -> "2_5316551040"
+	"Clump Thickness
+6.5_5316550320" [label="Clump Thickness
+6.5"]
+	"Bland Chromatin
+1.5_5316548256" -> "Clump Thickness
+6.5_5316550320"
+	"Clump Thickness
+6.5_5316550320" [label="Clump Thickness
+6.5"]
+	"Bare Nuclei
+4.5_5316548688" [label="Bare Nuclei
+4.5"]
+	"Clump Thickness
+6.5_5316550320" -> "Bare Nuclei
+4.5_5316548688"
+	"Bare Nuclei
+4.5_5316548688" [label="Bare Nuclei
+4.5"]
+	"Single Epithelial Cell Size
+3.0_5316552288" [label="Single Epithelial Cell Size
+3.0"]
+	"Bare Nuclei
+4.5_5316548688" -> "Single Epithelial Cell Size
+3.0_5316552288"
+	"Single Epithelial Cell Size
+3.0_5316552288" [label="Single Epithelial Cell Size
+3.0"]
+	"2_5316554496" [label=2 fillcolor=lightblue style=filled]
+	"Single Epithelial Cell Size
+3.0_5316552288" -> "2_5316554496"
+	"Normal Nucleoli
+8.5_5316550944" [label="Normal Nucleoli
+8.5"]
+	"Single Epithelial Cell Size
+3.0_5316552288" -> "Normal Nucleoli
+8.5_5316550944"
+	"Normal Nucleoli
+8.5_5316550944" [label="Normal Nucleoli
+8.5"]
+	"Marginal Adhesion
+9.5_5316553488" [label="Marginal Adhesion
+9.5"]
+	"Normal Nucleoli
+8.5_5316550944" -> "Marginal Adhesion
+9.5_5316553488"
+	"Marginal Adhesion
+9.5_5316553488" [label="Marginal Adhesion
+9.5"]
+	"2_5316556080" [label=2 fillcolor=lightblue style=filled]
+	"Marginal Adhesion
+9.5_5316553488" -> "2_5316556080"
+	"4_5316557712" [label=4 fillcolor=lightblue style=filled]
+	"Marginal Adhesion
+9.5_5316553488" -> "4_5316557712"
+	"4_5316555984" [label=4 fillcolor=lightblue style=filled]
+	"Normal Nucleoli
+8.5_5316550944" -> "4_5316555984"
+	"4_5316549936" [label=4 fillcolor=lightblue style=filled]
+	"Bare Nuclei
+4.5_5316548688" -> "4_5316549936"
+	"4_5316552336" [label=4 fillcolor=lightblue style=filled]
+	"Clump Thickness
+6.5_5316550320" -> "4_5316552336"
 }
