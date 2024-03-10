@@ -338,8 +338,12 @@ class DecisionTree:
         flag (boolean): True if the node is a base case, False otherwise
     """
     def is_base_case(self, node):
-        # if the node is pure, then treat as leaf node
-        flag1 = len(node.data['target'].unique()) == 1
+        if self.prediction_type == 'classification':
+            # if the node is pure, then treat as leaf node
+            flag1 = len(node.data['target'].unique()) == 1
+        elif self.prediction_type == 'regression':
+            # if the node is pure, then treat as leaf node
+            flag1 = (node.data['target'].max() -  node.data['target'].min()) < 1
         # if node contains one feature, then treat as leaf node
         flag2 = len(node.data.columns) == 1
         # if node contains less than min_samples_leaf, then treat as leaf node

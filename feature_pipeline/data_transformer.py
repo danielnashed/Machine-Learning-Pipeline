@@ -297,8 +297,8 @@ class DataTransformer:
                     test_data[int(col)] = (test_data[int(col)] - train_data_mean) / train_data_std
                 # for target variables that are skewed to 0, apply log transformation
                 elif transform_type == 'log':
-                    train_data[int(col)] = np.log(train_data[int(col)] + 1)
-                    test_data[int(col)] = np.log(test_data[int(col)] + 1)
+                    train_data[int(col)] = np.log(train_data[int(col)] + 1) + 0.001
+                    test_data[int(col)] = np.log(test_data[int(col)] + 1) + 0.001
                 train_test_transformed_data_inner.append([train_data, test_data])
             train_test_transformed_data_outer = train_test_transformed_data_inner
         return train_test_transformed_data_outer

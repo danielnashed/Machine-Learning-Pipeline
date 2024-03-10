@@ -42,16 +42,16 @@ class DecisionTreePruner():
         self.metric_name = None # initialize metric name
         self.metric = None # initialize metric 
         # initialize dictionary to map operator based on split criterion condition
-        self.ops =  {'>': operator.gt, '<': operator.lt}
+        self.ops =  {'>=': operator.ge, '<=': operator.le}
         self.op = None
         self.predict = meta_tree.predict # get the predict function
         self.is_grandparent = meta_tree.is_grandparent # get the is_grandparent function
         self.evaluator = __evaluator__.Evaluator(meta_tree, self.metrics_for_pruning()) # initialize the evaluator class
 
-        # # for debugging only 
-        # self.column_names = meta_tree.column_names
-        # self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'before_pruning.gv')
-        # self.visualizer.draw_tree(self.tree) # before pruning
+        # for debugging only 
+        self.column_names = meta_tree.column_names
+        self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'before_pruning.gv')
+        self.visualizer.draw_tree(self.tree) # before pruning
 
     """
     'set_eval_metric' method is responsible for setting the metric name and operator based on 
@@ -65,7 +65,7 @@ class DecisionTreePruner():
         # set the metric name and operator based on prediction type
         if self.prediction_type == 'classification':
             self.metric_name = 'accuracy'
-            self.op = '>' # select higher accuracy
+            self.op = '>=' # select higher accuracy
             config_string = """
             [evaluation_metrics]
             accuracy: 1
@@ -79,7 +79,7 @@ class DecisionTreePruner():
             """
         elif self.prediction_type == 'regression':
             self.metric_name = 'mse'
-            self.op = '<' # select lower mean squared error
+            self.op = '<=' # select lower mean squared error
             config_string = """
             [evaluation_metrics]
             accuracy: 0
@@ -267,8 +267,8 @@ class DecisionTreePruner():
         self.count_nodes(self.tree)
         self.print_stats() # print stats of pruning 
 
-        # #for debugging only
-        # self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'after_pruning.gv')
-        # self.visualizer.draw_tree(self.tree) # before pruning
+        #for debugging only
+        self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'after_pruning.gv')
+        self.visualizer.draw_tree(self.tree) # before pruning
 
         return self.tree

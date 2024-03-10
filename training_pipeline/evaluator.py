@@ -122,6 +122,19 @@ class Evaluator:
     def compute_rmse(self, labels, predictions):
         return (sum([(label - prediction)**2 for label, prediction in zip(labels, predictions.iloc[:, 0].values)]) / len(labels))**0.5
 
+    # Calculate mean percentage error for regression
+    def compute_mpe(self, labels, predictions):
+        return sum([(prediction - label) / label for label, prediction in zip(labels, predictions.iloc[:, 0].values)]) / len(labels)
+    
+    # Calculate mean absolute percentage error for regression
+    def compute_mape(self, labels, predictions):
+        return sum([abs((prediction - label) / label) for label, prediction in zip(labels, predictions.iloc[:, 0].values)]) / len(labels)
+    
+    # Calculate mean absolute deviation for regression
+    def compute_mad(self, labels, predictions):
+        mean = sum(labels) / len(labels)
+        return sum([abs(mean - prediction) for prediction in predictions.iloc[:, 0].values]) / len(labels)
+    
     # Calculate regression metrics
     def regression_metrics(self, labels, predictions):
         target_metrics = dict(self.config.items('evaluation_metrics'))
@@ -138,6 +151,15 @@ class Evaluator:
         if int(target_metrics['rmse']) == 1:
             rmse = self.compute_rmse(labels, predictions)
             metrics['rmse'] = rmse
+        if int(target_metrics['mpe']) == 1:
+            mpe = self.compute_mpe(labels, predictions)
+            metrics['mpe'] = mpe
+        if int(target_metrics['mape']) == 1:
+            mape = self.compute_mape(labels, predictions)
+            metrics['mape'] = mape
+        if int(target_metrics['mad']) == 1:
+            mad = self.compute_mad(labels, predictions)
+            metrics['mad'] = mad
         self.metrics = metrics
         return None
     

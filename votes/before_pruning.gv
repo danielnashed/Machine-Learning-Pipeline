@@ -1,0 +1,161 @@
+digraph {
+	"physician-fee-freeze
+['y', 'n', '?']_4557294528" [label="physician-fee-freeze
+['y', 'n', '?']"]
+	"synfuels-corporation-cutback
+['n', 'y', '?']_5431028832" [label="synfuels-corporation-cutback
+['n', 'y', '?']"]
+	"physician-fee-freeze
+['y', 'n', '?']_4557294528" -> "synfuels-corporation-cutback
+['n', 'y', '?']_5431028832"
+	"synfuels-corporation-cutback
+['n', 'y', '?']_5431028832" [label="synfuels-corporation-cutback
+['n', 'y', '?']"]
+	"duty-free-exports
+['n', 'y', '?']_5431102304" [label="duty-free-exports
+['n', 'y', '?']"]
+	"synfuels-corporation-cutback
+['n', 'y', '?']_5431028832" -> "duty-free-exports
+['n', 'y', '?']_5431102304"
+	"duty-free-exports
+['n', 'y', '?']_5431102304" [label="duty-free-exports
+['n', 'y', '?']"]
+	republican_5431111760 [label=republican fillcolor=lightblue style=filled]
+	"duty-free-exports
+['n', 'y', '?']_5431102304" -> republican_5431111760
+	"immigration
+['n', 'y']_5431110272" [label="immigration
+['n', 'y']"]
+	"duty-free-exports
+['n', 'y', '?']_5431102304" -> "immigration
+['n', 'y']_5431110272"
+	"immigration
+['n', 'y']_5431110272" [label="immigration
+['n', 'y']"]
+	democrat_5431282768 [label=democrat fillcolor=lightblue style=filled]
+	"immigration
+['n', 'y']_5431110272" -> democrat_5431282768
+	republican_5431282864 [label=republican fillcolor=lightblue style=filled]
+	"immigration
+['n', 'y']_5431110272" -> republican_5431282864
+	republican_5431111856 [label=republican fillcolor=lightblue style=filled]
+	"duty-free-exports
+['n', 'y', '?']_5431102304" -> republican_5431111856
+	"immigration
+['n', 'y']_5431104560" [label="immigration
+['n', 'y']"]
+	"synfuels-corporation-cutback
+['n', 'y', '?']_5431028832" -> "immigration
+['n', 'y']_5431104560"
+	"immigration
+['n', 'y']_5431104560" [label="immigration
+['n', 'y']"]
+	"adoption-of-the-budget-resolution
+['n', 'y']_5431287472" [label="adoption-of-the-budget-resolution
+['n', 'y']"]
+	"immigration
+['n', 'y']_5431104560" -> "adoption-of-the-budget-resolution
+['n', 'y']_5431287472"
+	"adoption-of-the-budget-resolution
+['n', 'y']_5431287472" [label="adoption-of-the-budget-resolution
+['n', 'y']"]
+	"superfund-right-to-sue
+['y', 'n']_4557110640" [label="superfund-right-to-sue
+['y', 'n']"]
+	"adoption-of-the-budget-resolution
+['n', 'y']_5431287472" -> "superfund-right-to-sue
+['y', 'n']_4557110640"
+	"superfund-right-to-sue
+['y', 'n']_4557110640" [label="superfund-right-to-sue
+['y', 'n']"]
+	"export-administration-act-south-africa
+['y', 'n', '?']_5431290880" [label="export-administration-act-south-africa
+['y', 'n', '?']"]
+	"superfund-right-to-sue
+['y', 'n']_4557110640" -> "export-administration-act-south-africa
+['y', 'n', '?']_5431290880"
+	"export-administration-act-south-africa
+['y', 'n', '?']_5431290880" [label="export-administration-act-south-africa
+['y', 'n', '?']"]
+	republican_5431295056 [label=republican fillcolor=lightblue style=filled]
+	"export-administration-act-south-africa
+['y', 'n', '?']_5431290880" -> republican_5431295056
+	republican_5431294096 [label=republican fillcolor=lightblue style=filled]
+	"export-administration-act-south-africa
+['y', 'n', '?']_5431290880" -> republican_5431294096
+	democrat_5431294960 [label=democrat fillcolor=lightblue style=filled]
+	"export-administration-act-south-africa
+['y', 'n', '?']_5431290880" -> democrat_5431294960
+	democrat_5431290016 [label=democrat fillcolor=lightblue style=filled]
+	"superfund-right-to-sue
+['y', 'n']_4557110640" -> democrat_5431290016
+	democrat_4557110064 [label=democrat fillcolor=lightblue style=filled]
+	"adoption-of-the-budget-resolution
+['n', 'y']_5431287472" -> democrat_4557110064
+	republican_5431287520 [label=republican fillcolor=lightblue style=filled]
+	"immigration
+['n', 'y']_5431104560" -> republican_5431287520
+	republican_5431104704 [label=republican fillcolor=lightblue style=filled]
+	"synfuels-corporation-cutback
+['n', 'y', '?']_5431028832" -> republican_5431104704
+	"adoption-of-the-budget-resolution
+['y', 'n']_5431019856" [label="adoption-of-the-budget-resolution
+['y', 'n']"]
+	"physician-fee-freeze
+['y', 'n', '?']_4557294528" -> "adoption-of-the-budget-resolution
+['y', 'n']_5431019856"
+	"adoption-of-the-budget-resolution
+['y', 'n']_5431019856" [label="adoption-of-the-budget-resolution
+['y', 'n']"]
+	democrat_5431416528 [label=democrat fillcolor=lightblue style=filled]
+	"adoption-of-the-budget-resolution
+['y', 'n']_5431019856" -> democrat_5431416528
+	"education-spending
+['n', 'y', '?']_5431415616" [label="education-spending
+['n', 'y', '?']"]
+	"adoption-of-the-budget-resolution
+['y', 'n']_5431019856" -> "education-spending
+['n', 'y', '?']_5431415616"
+	"education-spending
+['n', 'y', '?']_5431415616" [label="education-spending
+['n', 'y', '?']"]
+	democrat_5431421664 [label=democrat fillcolor=lightblue style=filled]
+	"education-spending
+['n', 'y', '?']_5431415616" -> democrat_5431421664
+	democrat_5431419024 [label=democrat fillcolor=lightblue style=filled]
+	"education-spending
+['n', 'y', '?']_5431415616" -> democrat_5431419024
+	republican_5431422576 [label=republican fillcolor=lightblue style=filled]
+	"education-spending
+['n', 'y', '?']_5431415616" -> republican_5431422576
+	"aid-to-nicaraguan-contras
+['y', '?']_5431029120" [label="aid-to-nicaraguan-contras
+['y', '?']"]
+	"physician-fee-freeze
+['y', 'n', '?']_4557294528" -> "aid-to-nicaraguan-contras
+['y', '?']_5431029120"
+	"aid-to-nicaraguan-contras
+['y', '?']_5431029120" [label="aid-to-nicaraguan-contras
+['y', '?']"]
+	"education-spending
+['n', 'y', '?']_5431543664" [label="education-spending
+['n', 'y', '?']"]
+	"aid-to-nicaraguan-contras
+['y', '?']_5431029120" -> "education-spending
+['n', 'y', '?']_5431543664"
+	"education-spending
+['n', 'y', '?']_5431543664" [label="education-spending
+['n', 'y', '?']"]
+	democrat_5431548560 [label=democrat fillcolor=lightblue style=filled]
+	"education-spending
+['n', 'y', '?']_5431543664" -> democrat_5431548560
+	republican_5431544960 [label=republican fillcolor=lightblue style=filled]
+	"education-spending
+['n', 'y', '?']_5431543664" -> republican_5431544960
+	democrat_5431544336 [label=democrat fillcolor=lightblue style=filled]
+	"education-spending
+['n', 'y', '?']_5431543664" -> democrat_5431544336
+	republican_5431544048 [label=republican fillcolor=lightblue style=filled]
+	"aid-to-nicaraguan-contras
+['y', '?']_5431029120" -> republican_5431544048
+}
