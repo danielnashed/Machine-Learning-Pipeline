@@ -153,13 +153,11 @@ class DecisionTree:
         elif self.prediction_type == 'regression':
             best_mse = float('inf')
             # discretize the feature into 4 bins
-            #bins = np.array_split(data[feature], 4)
             bins = pd.cut(data[feature], bins=4)
             for i in range(3):
                 left = bins.cat.categories[i].right # get the right edge of the left bin
                 right = bins.cat.categories[i+1].left # get the left edge of the right bin
                 split_value = (left + right)/2
-                #split_value = (bins[i].max() + bins[i+1].min())/2
                 mse = self.squared_error(data, feature, split_value)
                 if mse < best_mse:
                     best_mse = mse
@@ -343,7 +341,7 @@ class DecisionTree:
             flag1 = len(node.data['target'].unique()) == 1
         elif self.prediction_type == 'regression':
             # if the node is pure, then treat as leaf node
-            flag1 = (node.data['target'].max() -  node.data['target'].min()) < 1
+            flag1 = (node.data['target'].max() -  node.data['target'].min()) < 0.1
         # if node contains one feature, then treat as leaf node
         flag2 = len(node.data.columns) == 1
         # if node contains less than min_samples_leaf, then treat as leaf node
@@ -419,8 +417,6 @@ class DecisionTree:
             subset1 = subset1.drop(feature, axis=1) # drop the feature from the subset
             subset2 = node.data[node.data[feature] >= split_value]
             subset2 = subset2.drop(feature, axis=1) # drop the feature from the subset
-            if subset1.empty or subset2.empty:
-                debug = ''
             self.id += 1
             children_ids.append(self.id)
             children.append(TreeNode.Node(copy.deepcopy(subset1), id=self.id))

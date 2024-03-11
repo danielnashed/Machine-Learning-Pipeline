@@ -33,7 +33,7 @@ class DecisionTreePruner():
         self.validation_set = meta_tree.validation_set # get the validation set
         self.prediction_type = meta_tree.prediction_type # get the prediction type
         self.non_grandparents = meta_tree.non_grandparents # initialize list of non-grandparent nodes
-        self.num_nodes_before_pruning = meta_tree.id # initialize number of nodes before pruning
+        self.num_nodes_before_pruning = meta_tree.id + 1 # initialize number of nodes before pruning
         self.num_nodes_after_pruning = 1 # initialize number of nodes after pruning
         # initialize max depth before pruning and after pruning
         self.max_depth_before_pruning = self.find_max_depth(self.tree)
@@ -48,10 +48,10 @@ class DecisionTreePruner():
         self.is_grandparent = meta_tree.is_grandparent # get the is_grandparent function
         self.evaluator = __evaluator__.Evaluator(meta_tree, self.metrics_for_pruning()) # initialize the evaluator class
 
-        # for debugging only 
-        self.column_names = meta_tree.column_names
-        self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'before_pruning.gv')
-        self.visualizer.draw_tree(self.tree) # before pruning
+        # # for debugging only 
+        # self.column_names = meta_tree.column_names
+        # self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'before_pruning.gv')
+        # self.visualizer.draw_tree(self.tree) # before pruning
 
     """
     'set_eval_metric' method is responsible for setting the metric name and operator based on 
@@ -76,6 +76,9 @@ class DecisionTreePruner():
             mse: 0
             mae: 0
             rmse: 0
+            mpe: 0
+            mape: 0
+            mad: 0
             """
         elif self.prediction_type == 'regression':
             self.metric_name = 'mse'
@@ -90,6 +93,9 @@ class DecisionTreePruner():
             mse: 1
             mae: 0
             rmse: 0
+            mpe: 0
+            mape: 0
+            mad: 0
             """
         return config_string
 
@@ -267,8 +273,8 @@ class DecisionTreePruner():
         self.count_nodes(self.tree)
         self.print_stats() # print stats of pruning 
 
-        #for debugging only
-        self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'after_pruning.gv')
-        self.visualizer.draw_tree(self.tree) # before pruning
+        # #for debugging only
+        # self.visualizer = TreeVisualizer.DecisionTreeVisualizer(self.column_names, self.prediction_type, 'after_pruning.gv')
+        # self.visualizer.draw_tree(self.tree) # before pruning
 
         return self.tree
