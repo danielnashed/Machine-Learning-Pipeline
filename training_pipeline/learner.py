@@ -38,14 +38,15 @@ class Learner:
         if self.model.__class__.__name__ == 'DecisionTree':
             if self.model.pruning == True:
                 self.model.validation_set = data[0][2:]
-        if len(hyperparameters) == 0:
-            print('No hyperparameters to tune.')
-            return None
         metrics_all_models = []
         parameters = [line[0] for line in hyperparameters] # extract names of hyperparameters
         values = [line[1] for line in hyperparameters] # extract values of each hyperparameter
         # find all possible combinations of hyperparameters
         hyperparameters = list(product(*[eval(parameter) for parameter in values]))
+        if len(hyperparameters) <= 1:
+            print('No hyperparameters to tune.')
+            self.model.set_params(dict(zip(parameters, hyperparameters[0])))
+            return None
         # for each combination of hyperparameters, train the model and evaluate it
         for i, combination in enumerate(hyperparameters):
             print(f"Finetuning model hyperparameters: {dict(zip(parameters, combination))} --- {i*100/len(hyperparameters):.2f}% complete")
