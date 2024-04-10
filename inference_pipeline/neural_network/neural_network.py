@@ -17,6 +17,7 @@ class NeuralNetwork:
         self.column_names = None # column names for the dataset
         self.classes = None # unique classes in the training data
         self.learner = None # learner function
+        self.clip_value = 1 # clip value for gradient clipping
         sys.setrecursionlimit(3000) # set recursion limit to 3000 for large datasets
 
     """
@@ -80,6 +81,11 @@ class NeuralNetwork:
         # initialize regularization parameter
         self.l2 = self.hyperparameters['mu']
         return None
+
+    def check_over_under_flow(self, x):
+        if np.any(np.isnan(x)) or np.any(np.isinf(x)):
+            x = np.nan_to_num(x)
+        return x
     
     def sigmoid(self, x):
         # clip input to avoid overflow and underflow
@@ -99,7 +105,11 @@ class NeuralNetwork:
         self.activations[0] = X
         for i in range(len(self.network) - 1):
             # calculate the dot product of weights and activations
+            # self.activations[i] = self.check_over_under_flow(self.activations[i])
+            # self.weights[i] = self.check_over_under_flow(self.weights[i])
+            # self.biases[i] = self.check_over_under_flow(self.biases[i])
             dot_product = np.dot(self.activations[i], self.weights[i]) + self.biases[i]
+            # dot_product = self.check_over_under_flow(dot_product)
             # calculate the activations of the next layer
             if (i == len(self.network) - 2):
                 # if output layer, use softmax for classification and linear for regression
@@ -114,26 +124,48 @@ class NeuralNetwork:
     def back_propagation(self, output, Y):
         # calculate the error in the output layer
         self.deltas[-1] = output - Y
-        for i in range(len(self.network) - 2, 0, -1):
+        for i in range(len(self.network) - 2, -1, -1):
             # calculate the gradient of the weights
+            # self.activations[i] = self.check_over_under_flow(self.activations[i])
+            # self.deltas[i] = self.check_over_under_flow(self.deltas[i])
+            # self.weights[i] = self.check_over_under_flow(self.weights[i])
+
             self.gradients[i] = np.dot(self.activations[i].T, self.deltas[i])
+            # self.gradients[i] = self.check_over_under_flow(self.gradients[i])
+
+                # after calculating gradients, apply gradient clipping
+            for j in range(len(self.gradients)):
+                np.clip(self.gradients[j], -self.clip_value, self.clip_value, out=self.gradients[j])
+
             # calculate the error in the hidden layers
             # self.deltas[i] = np.dot(self.deltas[i+1], self.weights[i].T) * self.sigmoid_derivative(self.activations[i])
+            if i == 0:
+                return None
             self.deltas[i-1] = np.dot(self.deltas[i], self.weights[i].T) * self.sigmoid_derivative(self.activations[i])
+
         return None
     
     def l2_regularization(self):
         for i in range(len(self.network) - 1):
+            # self.weights[i] = self.check_over_under_flow(self.weights[i])
+            # self.gradients[i] = self.check_over_under_flow(self.gradients[i])
             self.gradients[i] += self.l2 * self.weights[i]
         return None
 
     def update_weights(self):
         for i in range(len(self.network) - 1):
             # update the weights
+            # self.gradients[i] = self.check_over_under_flow(self.gradients[i])
+            # self.weights[i] = self.check_over_under_flow(self.weights[i])
             self.weights[i] -= self.learning_rate * self.gradients[i]
             # update the biases
-            delta_bias = np.sum(self.deltas[i], axis=0, keepdims=True)
+            # self.deltas[i] = self.check_over_under_flow(self.deltas[i])
+            # delta_bias = np.sum(self.deltas[i], axis=0, keepdims=True)
+            delta_bias = np.sum(self.gradients[i], axis=0, keepdims=True)  #try gradients instead to update bias
+            # delta_bias = self.check_over_under_flow(delta_bias)
+            # self.biases[i] = self.check_over_under_flow(self.biases[i])
             self.biases[i] -= self.learning_rate * delta_bias
+            # self.biases[i] = self.check_over_under_flow(self.biases[i])
         return None
     
     def calculate_loss(self, output, Y):
@@ -171,10 +203,16 @@ class NeuralNetwork:
         # learn the weights using batch gradient descent 
         for epoch in range(self.hyperparameters['epochs']):
             # print(f'        Epoch: {epoch}')
+            # # if epoch == 100:
+            # #     debug = ''
             output = self.forward_propagation(X)
             self.back_propagation(output, Y)
             self.l2_regularization()
             self.update_weights()
+            ### debug
+            flag = any(np.isnan(weight_matrix).any() for weight_matrix in self.weights)
+            if flag:
+                debug = ''
             # loss = self.calculate_loss(output, Y)
             # accuracy = self.calculate_accuracy(output, Y)
             # print(f'Loss: {loss}, Accuracy: {accuracy}')
@@ -230,18 +268,18 @@ class NeuralNetwork:
     Returns:
         y_pred (DataFrame): predicted target values
     """
-    def predict(self, X, function=None):
-        W = self.function
-        if self.prediction_type == 'classification':
-            logits = np.dot(X, W)  # calculate scores
-            exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))  # exponentiate the scores
-            # exp_logits = np.exp(logits)  # exponentiate the scores
-            probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)  # calculate probabilities
-            y_pred = np.argmax(probs, axis=1)  # choose the class with the highest probability
-        elif self.prediction_type == 'regression':
-            y_pred = np.dot(X, W)  # calculate prediction
-        y_pred = pd.DataFrame(y_pred) # convert to dataframe object
-        return y_pred
+    # def predict(self, X, function=None):
+    #     W = self.function
+    #     if self.prediction_type == 'classification':
+    #         logits = np.dot(X, W)  # calculate scores
+    #         exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))  # exponentiate the scores
+    #         # exp_logits = np.exp(logits)  # exponentiate the scores
+    #         probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)  # calculate probabilities
+    #         y_pred = np.argmax(probs, axis=1)  # choose the class with the highest probability
+    #     elif self.prediction_type == 'regression':
+    #         y_pred = np.dot(X, W)  # calculate prediction
+    #     y_pred = pd.DataFrame(y_pred) # convert to dataframe object
+    #     return y_pred
 
 
     def predict(self, X):

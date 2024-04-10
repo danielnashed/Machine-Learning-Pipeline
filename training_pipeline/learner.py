@@ -5,6 +5,7 @@ import pickle
 import time
 import configparser
 import math
+import numpy as np
 from training_pipeline import evaluator as __evaluator__
 from inference_pipeline.decision_tree import tree_visualizer as TreeVisualizer
 
@@ -117,7 +118,14 @@ class Learner:
             metrics_std[metric] = math.sqrt(sum([(experiment[metric] - metrics_average[metric])**2 for experiment in metrics_all_experiements if not math.isnan(experiment[metric])]) / len(metrics_all_experiements))
         return metrics_std
     
+    def check_over_under_flow(self, x):
+        for key in x:
+            if np.isnan(x[key]) or np.isinf(x[key]):
+                x[key] = np.nan_to_num(x[key])
+        return x
+    
     def get_stats(self, metrics_all_experiements):
+        metrics_all_experiements = [self.check_over_under_flow(metrics) for metrics in metrics_all_experiements]
         metrics_average = self.get_average(metrics_all_experiements)
         metrics_std = self.get_std(metrics_all_experiements, metrics_average)
         # round the metrics to 3 decimal places
