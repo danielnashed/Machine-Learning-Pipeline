@@ -133,7 +133,7 @@ class NeuralNetwork:
             self.gradients[i] = np.dot(self.activations[i].T, self.deltas[i])
             # self.gradients[i] = self.check_over_under_flow(self.gradients[i])
 
-                # after calculating gradients, apply gradient clipping
+            # after calculating gradients, apply gradient clipping
             for j in range(len(self.gradients)):
                 np.clip(self.gradients[j], -self.clip_value, self.clip_value, out=self.gradients[j])
 
