@@ -18,6 +18,8 @@ class NeuralNetwork:
         self.classes = None # unique classes in the training data
         self.learner = None # learner function
         self.clip_value = 1 # clip value for gradient clipping
+        self.autoencoder_layers = None # autoencoder hidden layers
+        self.is_autoencoder = False # is the network an autoencoder?
         sys.setrecursionlimit(3000) # set recursion limit to 3000 for large datasets
 
     """
@@ -51,13 +53,16 @@ class NeuralNetwork:
             if 'hidden_layer' in hyperparameter:
                 hidden_layers_size.append(self.hyperparameters[hyperparameter])
         # 3 - number of nodes in output layer
-        if self.prediction_type == 'classification':
-            output_layer_size = len(y.unique()) # number of classes
-        elif self.prediction_type == 'regression':
-            output_layer_size = 1
+        if y is not None:
+            if self.prediction_type == 'classification':
+                output_layer_size = len(y.unique()) # number of classes
+            elif self.prediction_type == 'regression':
+                output_layer_size = 1
+        else:
+            output_layer_size = input_layer_size
         return [input_layer_size] + hidden_layers_size + [output_layer_size]
 
-    def create_network(self):
+    def create_network(self, autoencoder_function=None):
         self.weights = []
         self.deltas = []
         self.gradients = []
@@ -72,6 +77,11 @@ class NeuralNetwork:
         self.biases = []
         for i in range(1, len(self.network)):
             self.biases.append(np.zeros((1, self.network[i])))
+        # if autoncoder, use the learned weights and biases 
+        if autoencoder_function is not None:
+            for i in range(len(autoencoder_function['weights']) - 1):
+                self.weights[i] = autoencoder_function['weights'][i]
+                self.biases[i] = autoencoder_function['biases'][i]
         # initialize activations for all layers
         self.activations = []
         for i in range(len(self.network)):
@@ -112,11 +122,14 @@ class NeuralNetwork:
             # dot_product = self.check_over_under_flow(dot_product)
             # calculate the activations of the next layer
             if (i == len(self.network) - 2):
-                # if output layer, use softmax for classification and linear for regression
-                if self.prediction_type == 'classification':
-                    self.activations[i+1] = self.softmax(dot_product)
-                elif self.prediction_type == 'regression':
-                    self.activations[i+1] = dot_product
+                if self.is_autoencoder == False:
+                    # if output layer, use softmax for classification and linear for regression
+                    if self.prediction_type == 'classification':
+                        self.activations[i+1] = self.softmax(dot_product)
+                    elif self.prediction_type == 'regression':
+                        self.activations[i+1] = dot_product
+                else:
+                    self.activations[i+1] = self.sigmoid(dot_product)
             else:
                 self.activations[i+1] = self.sigmoid(dot_product)
         return self.activations[-1]
@@ -169,14 +182,66 @@ class NeuralNetwork:
         return None
     
     def calculate_loss(self, output, Y):
-        loss = -np.sum(Y * np.log(output + 1e-15)) 
+        loss = -np.sum(Y * np.log(output + 1e-15), axis=0).sum()
         return loss
     
-    # def calculate_accuracy(self, output, Y):
-    #     predictions = np.argmax(output, axis=1)
-    #     true_labels = np.argmax(Y, axis=1)
-    #     accuracy = np.mean(predictions == true_labels)
-    #     return accuracy
+    def calculate_accuracy(self, output, Y):
+        predictions = np.argmax(output, axis=1)
+        true_labels = np.argmax(Y, axis=1)
+        accuracy = np.mean(predictions == true_labels)
+        return accuracy
+    
+    def calculate_mse(self, output, Y):
+        mse = np.mean((output - Y) ** 2)
+        return mse
+
+    def train_autoencoder(self, X):
+        print('        Training autoencoder...')
+        autoencoder = NeuralNetwork()
+        autoencoder.hyperparameters = {'eta': 0.01, 'mu': 0.01, 'epochs': 1000}
+        for layer in self.autoencoder_layers:
+            num_nodes = int(self.autoencoder_layers[layer])
+            if num_nodes >= len(X.iloc[0]):
+                num_nodes = int(len(X.iloc[0]) * 0.25) # reduce the number of nodes to be less than the number of features
+            self.autoencoder_layers[layer] = num_nodes
+        autoencoder.hyperparameters.update(self.autoencoder_layers)
+        autoencoder.prediction_type = 'regression' # classification or regression
+        autoencoder.function = None # function learned from training data
+        autoencoder.positive_class = self.positive_class # positive class (if binary classification is used)
+        autoencoder.num_classes = self.num_classes # number of classes (if multi-class classification is used)
+        autoencoder.column_names = self.column_names # column names for the dataset
+        autoencoder.classes = self.classes # unique classes in the training data
+        autoencoder.learner = None # learner function
+        autoencoder.clip_value = self.clip_value # clip value for gradient clipping
+        autoencoder.autoencoder_layers = None # flag for autoencoder
+        autoencoder.is_autoencoder = True # flag for autoencoder
+        autoencoder.network = autoencoder.size_of_layers(X, y=None) # calculate the size of layers
+        autoencoder.create_network() # create the neural network
+        # learn the weights using batch gradient descent 
+        autoencoder.run_epochs(X, X)
+        autoencoder.function = {'weights': autoencoder.weights, 'biases': autoencoder.biases}
+        return autoencoder
+
+    def run_epochs(self, X, Y):
+        for epoch in range(self.hyperparameters['epochs'] + 1):
+            output = self.forward_propagation(X)
+            self.back_propagation(output, Y)
+            self.l2_regularization()
+            self.update_weights()
+            ### debug
+            flag = any(np.isnan(weight_matrix).any() for weight_matrix in self.weights)
+            if flag:
+                debug = ''
+            if epoch % 100 == 0 and epoch != 0:
+                loss = self.calculate_loss(output, Y)
+                if self.prediction_type == 'classification':
+                    metric_name = 'Accuracy'
+                    metric = self.calculate_accuracy(output, Y)
+                elif self.prediction_type == 'regression':
+                    metric_name = 'MSE'
+                    metric = self.calculate_mse(output, Y)
+                print(f'            Epoch: {epoch} --> Loss: {loss:.5f}, {metric_name}: {metric:.5f}')
+        return None
 
     """
     'fit' method is responsible for training the model.
@@ -190,8 +255,8 @@ class NeuralNetwork:
         # learning curve: should produce logs of model metric as function of % of training data 
         # used for training. No learning curve is produced for decision tree.
         learning_metrics = None
-        # data = copy.deepcopy(X) # deep copy training data
-        # data['target'] = y # add target to data
+        if self.autoencoder_layers is not None:
+            autoencoder = self.train_autoencoder(X)
         if self.prediction_type == 'classification':
             Y = pd.get_dummies(y) # one-hot encoding of target
             self.class_mappings(Y) # create class mappings
@@ -199,23 +264,14 @@ class NeuralNetwork:
         elif self.prediction_type == 'regression':
             Y = y.values.reshape(-1, 1) # pass only the values
         self.network = self.size_of_layers(X, y) # calculate the size of layers
-        self.create_network() # create the neural network
+        if self.autoencoder_layers is not None:
+            self.network = autoencoder.network[:-1] + self.network[1:]
+            self.create_network(autoencoder.function) # create the neural network
+        else:
+            self.create_network() # create the neural network
+        print('        Training feedforward network...')
         # learn the weights using batch gradient descent 
-        for epoch in range(self.hyperparameters['epochs']):
-            # print(f'        Epoch: {epoch}')
-            # # if epoch == 100:
-            # #     debug = ''
-            output = self.forward_propagation(X)
-            self.back_propagation(output, Y)
-            self.l2_regularization()
-            self.update_weights()
-            ### debug
-            flag = any(np.isnan(weight_matrix).any() for weight_matrix in self.weights)
-            if flag:
-                debug = ''
-            # loss = self.calculate_loss(output, Y)
-            # accuracy = self.calculate_accuracy(output, Y)
-            # print(f'Loss: {loss}, Accuracy: {accuracy}')
+        self.run_epochs(X, Y)
         self.function = {'weights': self.weights, 'biases': self.biases}
         return learning_metrics
     

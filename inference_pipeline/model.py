@@ -56,5 +56,9 @@ class Model:
         # only for decision trees, set the pruning to True or False
         if self.model.__class__.__name__ == 'DecisionTree':
             self.model.pruning = bool(int(self.config['pruning']['pruning']))
+        # only for neural networks, check if we need to implement autoencoder
+        if self.model.__class__.__name__ == 'NeuralNetwork':
+            if self.config['autoencoder']['autoencode'] == '1':
+                self.model.autoencoder_layers = dict(list(self.config.items('autoencoder'))[1:])
         print('Setting model to ' + self.model.__class__.__name__ + '...')
         return (self.model, self.config)
