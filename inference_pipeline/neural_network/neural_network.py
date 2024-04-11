@@ -200,8 +200,8 @@ class NeuralNetwork:
         autoencoder.hyperparameters = {'eta': 0.01, 'mu': 0.05, 'epochs': 1000}
         for layer in self.autoencoder_layers:
             num_nodes = int(self.autoencoder_layers[layer])
-            if num_nodes >= len(X.iloc[0]):
-                num_nodes = int(len(X.iloc[0]) * 0.25) # reduce the number of nodes to be less than the number of features
+            # if num_nodes >= len(X.iloc[0]):
+            num_nodes = int(len(X.iloc[0]) * 0.5) # reduce the number of nodes to be less than the number of features
             self.autoencoder_layers[layer] = num_nodes
         autoencoder.hyperparameters.update(self.autoencoder_layers)
         autoencoder.prediction_type = 'regression' # classification or regression
@@ -248,16 +248,13 @@ class NeuralNetwork:
     def run_epochs(self, X, Y):
         loss_arr, metric_arr, weights_arr, biases_arr = {}, {}, {}, {}
         for epoch in range(self.hyperparameters['epochs'] + 1):
-            if epoch % 100 == 0: 
-                weights_arr[epoch] = copy.deepcopy(self.weights)
-                biases_arr[epoch] = copy.deepcopy(self.biases)
             output = self.forward_propagation(X)
             self.back_propagation(output, Y)
             self.l2_regularization()
             self.update_weights()
             ### debug
             flag = any(np.isnan(weight_matrix).any() for weight_matrix in self.weights)
-            if flag or epoch == 600:
+            if flag or epoch == 1500:
                 debug = ''
             if epoch % 100 == 0 and epoch != 0:
                 epoch_metrics = self.epoch_metrics(output, Y)
@@ -267,8 +264,8 @@ class NeuralNetwork:
                 validation_metric = epoch_metrics['validation']
                 loss_arr[epoch] = loss
                 metric_arr[epoch] = (training_metric, validation_metric)
-                # weights_arr[epoch] = copy.deepcopy(self.weights)
-                # biases_arr[epoch] = copy.deepcopy(self.biases)
+                weights_arr[epoch] = copy.deepcopy(self.weights)
+                biases_arr[epoch] = copy.deepcopy(self.biases)
                 print(f'            Epoch: {epoch} --> Loss: {loss:.5f}, Training {metric_name}: {training_metric:.5f}, Validation {metric_name}: {validation_metric:.5f}')
         return {'Loss': loss_arr, metric_name: metric_arr, 'weights': weights_arr, 'biases': biases_arr}
 

@@ -31,7 +31,7 @@ class Dashboard:
     def visualize(self, metrics, logs):
         if len(logs['learning_metrics']) != 0:
             learning_curve_figs = self.plot_learning_curve(logs['learning_metrics'])
-            weights_biases_figs = self.plot_weights_biases(logs['learning_metrics'])
+            # weights_biases_figs = self.plot_weights_biases(logs['learning_metrics'])
             for id, learning_curve_fig in enumerate(learning_curve_figs):
                 self.export_dashboard(learning_curve_fig, None, id=id+1)
         if len(logs['validation_metrics']) != 0:
@@ -89,7 +89,7 @@ class Dashboard:
             figures.append(fig)
         return figures
     
-    # Plot the learning curve
+    # Plot weights and biases
     def plot_weights_biases(self, learning_metrics):
         print('Plotting weights and biases...')
         figures = []
@@ -104,7 +104,7 @@ class Dashboard:
                 fig, ax = plt.subplots(2, network_size, squeeze=False, dpi = 300, constrained_layout=True)
             else:
                 arch_name = 'Autoencoder + Feedforward Neural Network'
-                fig, ax = plt.subplots(4, network_size, squeeze=False, dpi = 300, constrained_layout=True)
+                fig, ax = plt.subplots(2, network_size, squeeze=False, dpi = 300, constrained_layout=True)
             for i, arch in enumerate(metrics):
                 if len(metrics) == 2 and i == 0:
                     continue
@@ -158,8 +158,8 @@ class Dashboard:
                         # cbar2 = plt.colorbar(im2, cax=axins2)
                         cbar2.ax.tick_params(labelsize=5)
                         colorbars.append(cbar2)
-                        ax[0][n].set_title('Layer ' + str(n+1) + ' Weights', fontsize=6)
-                        ax[1][n].set_title('Layer ' + str(n+1) + ' Biases', fontsize=6)
+                        ax[0][n].set_title('Layer ' + str(n+1) + ' Weights\n' + '[' + str(len(weight)) + ' x ' + str(len(weight[0])) + ']', fontsize=6)
+                        ax[1][n].set_title('Layer ' + str(n+1) + ' Biases\n' + '[' + str(len(bias)) + ' x ' + str(len(bias[0])) + ']', fontsize=6)
                         ax[0][n].set_xlabel('Neurons in Layer ' + str(n+1), fontsize=6)
                         ax[0][n].set_ylabel('Neurons in Layer ' + str(n), fontsize=6)
                         ax[1][n].set_xlabel('Neurons in Layer ' + str(n+1), fontsize=6)
@@ -193,7 +193,7 @@ class Dashboard:
     def plot_validation_curve(self, validation_metrics):
         print('Plotting the validation curve...')
         # Create a figure and axis
-        fig, ax = plt.subplots(dpi = 300)
+        fig, ax = plt.subplots(dpi = 300, constrained_layout=True)
         plt.grid()
         ax.set_title('Validation Curve', fontsize=10)
         ax.set_xlabel('Hyperparameters')
@@ -217,7 +217,7 @@ class Dashboard:
             ax.plot(range(x), metric[1], label = 'testing ' + metric[0])
         ax.legend()
         plt.xticks(range(x), x_labels, rotation=90)
-        plt.tight_layout()
+        # plt.tight_layout()
         return fig
 
     # Export the dashboard as a .png file
