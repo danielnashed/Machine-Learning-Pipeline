@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import copy
 
 class NeuralNetwork:
     def __init__(self):
@@ -61,7 +62,7 @@ class NeuralNetwork:
         self.gradients = []
         for i in range(len(self.network) - 1):
             # initialize weights for all layers
-            self.weights.append(np.random.randn(self.network[i], self.network[i+1]))
+            self.weights.append(0.1 * np.random.randn(self.network[i], self.network[i+1]))
             # initialize deltas for all layers
             self.deltas.append(np.zeros(self.network[i+1]))
             # initialize gradients for all layers
@@ -247,6 +248,9 @@ class NeuralNetwork:
     def run_epochs(self, X, Y):
         loss_arr, metric_arr, weights_arr, biases_arr = {}, {}, {}, {}
         for epoch in range(self.hyperparameters['epochs'] + 1):
+            if epoch % 100 == 0: 
+                weights_arr[epoch] = copy.deepcopy(self.weights)
+                biases_arr[epoch] = copy.deepcopy(self.biases)
             output = self.forward_propagation(X)
             self.back_propagation(output, Y)
             self.l2_regularization()
@@ -263,10 +267,10 @@ class NeuralNetwork:
                 validation_metric = epoch_metrics['validation']
                 loss_arr[epoch] = loss
                 metric_arr[epoch] = (training_metric, validation_metric)
-                weights_arr[epoch] = self.weights
-                biases_arr[epoch] = self.biases
+                # weights_arr[epoch] = copy.deepcopy(self.weights)
+                # biases_arr[epoch] = copy.deepcopy(self.biases)
                 print(f'            Epoch: {epoch} --> Loss: {loss:.5f}, Training {metric_name}: {training_metric:.5f}, Validation {metric_name}: {validation_metric:.5f}')
-        return {'Loss': loss_arr, metric_name: metric_arr}
+        return {'Loss': loss_arr, metric_name: metric_arr, 'weights': weights_arr, 'biases': biases_arr}
 
     """
     'fit' method is responsible for training the model.
