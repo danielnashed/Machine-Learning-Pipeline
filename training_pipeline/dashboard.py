@@ -25,24 +25,61 @@ class Dashboard:
     # Visualize the model's performance
     def visualize(self, metrics, logs):
         if len(logs['learning_metrics']) != 0:
-            learning_curve_fig = self.plot_learning_curve(logs['learning_metrics'])
-            self.export_dashboard(learning_curve_fig, None)
+            learning_curve_figs = self.plot_learning_curve(logs['learning_metrics'])
+            for id, learning_curve_fig in enumerate(learning_curve_figs):
+                self.export_dashboard(learning_curve_fig, None, id=id+1)
         if len(logs['validation_metrics']) != 0:
             validation_curve_fig = self.plot_validation_curve(logs['validation_metrics'])
-            self.export_dashboard(None, validation_curve_fig)
+            self.export_dashboard(None, validation_curve_fig, id=None)
         return None
     
+    # # Plot the learning curve (TO BE IMPLEMENTED LATER IN PROJECT 2)   
+    # def plot_learning_curve(self, learning_metrics):
+    #     print('Plotting the learning curve...')
+    #     # Create a figure and axis
+    #     fig, ax = plt.subplots(dpi = 300)
+    #     ax.set_title('Learning Curve (TO BE IMPLEMENTED LATER IN PROJECT 2)', fontsize=10)
+    #     ax.set_xlabel('Percent of Training Data Used')
+    #     ax.set_ylabel('Model Metric(s)')
+    #     plt.grid()
+    #     plt.tight_layout()
+    #     return fig
+
     # Plot the learning curve (TO BE IMPLEMENTED LATER IN PROJECT 2)   
     def plot_learning_curve(self, learning_metrics):
         print('Plotting the learning curve...')
-        # Create a figure and axis
-        fig, ax = plt.subplots(dpi = 300)
-        ax.set_title('Learning Curve (TO BE IMPLEMENTED LATER IN PROJECT 2)', fontsize=10)
-        ax.set_xlabel('Percent of Training Data Used')
-        ax.set_ylabel('Model Metric(s)')
-        plt.grid()
-        plt.tight_layout()
-        return fig
+        figures = []
+        for k, model in enumerate(learning_metrics):
+            metrics = model['learning_metrics']
+            if len(metrics) == 1:
+                arch_name = 'Feedforward Neural Network'
+                fig, ax = plt.subplots(1, 2, squeeze=False, dpi = 300)
+            else:
+                arch_name = 'Autoencoder + Feedforward Neural Network'
+                fig, ax = plt.subplots(2, 2, squeeze=False, dpi = 300)
+            fig.suptitle('Learning Curves for ' + arch_name + ' - Experiment ' + str(k+1), fontsize=8)
+            for i, arch in enumerate(metrics):
+                for j, metric in enumerate(arch.items()):
+                    metric_name = metric[0]
+                    x = list(metric[1].keys())
+                    if j == 0:
+                        y = list(metric[1].values())
+                        ax[i][j].plot(x, y, color='red')
+                    else:
+                        train_metric = [list(metric[1].values())[i][0] for i in range(len(x))]
+                        val_metric = [list(metric[1].values())[i][1] for i in range(len(x))]
+                        ax[i][j].plot(x, train_metric, color='blue', label='Training')
+                        ax[i][j].plot(x, val_metric, color='orange', label='Validation')
+                        ax[i][j].legend(fontsize=6)
+                    ax[i][j].set_title(metric_name + ' over Training Epochs' + ' on ' + self.data.capitalize() + ' Dataset', fontsize=6)
+                    ax[i][j].set_xlabel('Epoch', fontsize=6)
+                    ax[i][j].set_ylabel(metric_name, fontsize=6)
+                    ax[i][j].tick_params(axis='both', which='major', labelsize=6)
+                    ax[i][j].grid(True)
+                    plt.tight_layout()
+            # plt.show()  # Display the figure
+            figures.append(fig)
+        return figures
     
     # Plot the validation curve
     def plot_validation_curve(self, validation_metrics):
@@ -76,10 +113,11 @@ class Dashboard:
         return fig
 
     # Export the dashboard as a .png file
-    def export_dashboard(self, learning_curve_fig, validation_curve_fig):
+    def export_dashboard(self, learning_curve_fig, validation_curve_fig, id=None):
         print('Exporting the dashboard...')
         if learning_curve_fig is not None:
-            learning_curve_name = self.model + ' learning curve with ' + self.data + 'dataset using k_x_' + str(self.splits) + ' cross validation.png'
+            if id is None: id = ''
+            learning_curve_name = self.model + ' learning curve with ' + self.data + 'dataset using k_x_' + str(self.splits) + ' cross validation' + '_' + str(id) + '.png'
             learning_curve_fullpath = os.path.join(self.output, learning_curve_name)
             learning_curve_fig.savefig(learning_curve_fullpath)
         if validation_curve_fig is not None:

@@ -39,6 +39,9 @@ class Learner:
         if self.model.__class__.__name__ == 'DecisionTree':
             if self.model.pruning == True:
                 self.model.validation_set = data[0][2:]
+        # only for neural networks, store the 20% validation set in the model to perform validation after each epoch
+        if self.model.__class__.__name__ == 'NeuralNetwork':
+            self.model.validation_set = data[0][2:]
         metrics_all_models = []
         parameters = [line[0] for line in hyperparameters] # extract names of hyperparameters
         values = [line[1] for line in hyperparameters] # extract values of each hyperparameter

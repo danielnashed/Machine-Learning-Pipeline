@@ -1,26 +1,19 @@
 import pandas as pd
-import copy
-import operator
 import numpy as np
-import sys
-from inference_pipeline.decision_tree import node as TreeNode
-from inference_pipeline.decision_tree import tree_pruner as TreePruner
-from inference_pipeline.decision_tree import tree_visualizer as TreeVisualizer
 
 class NeuralNetwork:
     def __init__(self):
-        self.hyperparameters = None # k for KNN
+        self.hyperparameters = None # hyperparameters for the model
         self.prediction_type = None # classification or regression
         self.function = None # function learned from training data
         self.positive_class = None # positive class (if binary classification is used)
         self.num_classes = None # number of classes (if multi-class classification is used)
         self.column_names = None # column names for the dataset
         self.classes = None # unique classes in the training data
-        self.learner = None # learner function
+        self.validation_set = None # validation set for testing during epochs
         self.clip_value = 1 # clip value for gradient clipping
         self.autoencoder_layers = None # autoencoder hidden layers
         self.is_autoencoder = False # is the network an autoencoder?
-        sys.setrecursionlimit(3000) # set recursion limit to 3000 for large datasets
 
     """
     'set_params' method is responsible for setting the hyperparameters for the model.
@@ -129,7 +122,8 @@ class NeuralNetwork:
                     elif self.prediction_type == 'regression':
                         self.activations[i+1] = dot_product
                 else:
-                    self.activations[i+1] = self.sigmoid(dot_product)
+                    # self.activations[i+1] = self.sigmoid(dot_product)
+                    self.activations[i+1] = dot_product
             else:
                 self.activations[i+1] = self.sigmoid(dot_product)
         return self.activations[-1]
@@ -148,6 +142,8 @@ class NeuralNetwork:
 
             # after calculating gradients, apply gradient clipping
             for j in range(len(self.gradients)):
+                # mean = np.mean(self.gradients[j])
+                # print(f'            Mean of gradients: {j} --> {mean}')
                 np.clip(self.gradients[j], -self.clip_value, self.clip_value, out=self.gradients[j])
 
             # calculate the error in the hidden layers
@@ -182,12 +178,14 @@ class NeuralNetwork:
         return None
     
     def calculate_loss(self, output, Y):
-        loss = -np.sum(Y * np.log(output + 1e-15), axis=0).sum()
+        epsilon = 1e-15
+        output = np.clip(output, epsilon, 1 - epsilon)
+        loss = -np.sum(Y * np.log(output), axis=0).sum() # cross entropy loss
         return loss
     
-    def calculate_accuracy(self, output, Y):
-        predictions = np.argmax(output, axis=1)
-        true_labels = np.argmax(Y, axis=1)
+    def calculate_accuracy(self, predictions, true_labels):
+        # predictions = np.argmax(output, axis=1)
+        # true_labels = np.argmax(Y, axis=1)
         accuracy = np.mean(predictions == true_labels)
         return accuracy
     
@@ -198,7 +196,7 @@ class NeuralNetwork:
     def train_autoencoder(self, X):
         print('        Training autoencoder...')
         autoencoder = NeuralNetwork()
-        autoencoder.hyperparameters = {'eta': 0.01, 'mu': 0.01, 'epochs': 1000}
+        autoencoder.hyperparameters = {'eta': 0.01, 'mu': 0.05, 'epochs': 1000}
         for layer in self.autoencoder_layers:
             num_nodes = int(self.autoencoder_layers[layer])
             if num_nodes >= len(X.iloc[0]):
@@ -211,18 +209,43 @@ class NeuralNetwork:
         autoencoder.num_classes = self.num_classes # number of classes (if multi-class classification is used)
         autoencoder.column_names = self.column_names # column names for the dataset
         autoencoder.classes = self.classes # unique classes in the training data
-        autoencoder.learner = None # learner function
+        autoencoder.validation_set = self.validation_set # validation set for testing during epochs
         autoencoder.clip_value = self.clip_value # clip value for gradient clipping
         autoencoder.autoencoder_layers = None # flag for autoencoder
         autoencoder.is_autoencoder = True # flag for autoencoder
         autoencoder.network = autoencoder.size_of_layers(X, y=None) # calculate the size of layers
         autoencoder.create_network() # create the neural network
         # learn the weights using batch gradient descent 
-        autoencoder.run_epochs(X, X)
+        learning_metrics = autoencoder.run_epochs(X, X)
         autoencoder.function = {'weights': autoencoder.weights, 'biases': autoencoder.biases}
-        return autoencoder
+        return (autoencoder, learning_metrics)
+    
+    def epoch_metrics(self, output, Y):
+        loss = self.calculate_loss(output, Y) # calculate loss
+        Y_test_predictions = self.predict(self.validation_set[0]).values
+        if self.is_autoencoder:
+            Y_test_labels = self.validation_set[0].values
+        else:
+            Y_test_labels = self.validation_set[1].values.reshape(-1, 1)
+        if self.prediction_type == 'classification':
+            metric_name = 'Accuracy'
+            Y_train_predictions = np.argmax(output, axis=1) 
+            Y_train_labels = np.argmax(Y, axis=1)
+            training_metric = self.calculate_accuracy(Y_train_predictions, Y_train_labels)
+            validation_metric = self.calculate_accuracy(Y_test_predictions, Y_test_labels)
+        elif self.prediction_type == 'regression':
+            metric_name = 'MSE'
+            training_metric = self.calculate_mse(output, Y)
+            validation_metric = self.calculate_mse(Y_test_predictions, Y_test_labels)
+        return {'loss': loss, 
+                'metric_name': metric_name, 
+                'training': training_metric, 
+                'validation': validation_metric,
+                'weights': self.weights,
+                'biases': self.biases}
 
     def run_epochs(self, X, Y):
+        loss_arr, metric_arr, weights_arr, biases_arr = {}, {}, {}, {}
         for epoch in range(self.hyperparameters['epochs'] + 1):
             output = self.forward_propagation(X)
             self.back_propagation(output, Y)
@@ -230,18 +253,20 @@ class NeuralNetwork:
             self.update_weights()
             ### debug
             flag = any(np.isnan(weight_matrix).any() for weight_matrix in self.weights)
-            if flag:
+            if flag or epoch == 600:
                 debug = ''
             if epoch % 100 == 0 and epoch != 0:
-                loss = self.calculate_loss(output, Y)
-                if self.prediction_type == 'classification':
-                    metric_name = 'Accuracy'
-                    metric = self.calculate_accuracy(output, Y)
-                elif self.prediction_type == 'regression':
-                    metric_name = 'MSE'
-                    metric = self.calculate_mse(output, Y)
-                print(f'            Epoch: {epoch} --> Loss: {loss:.5f}, {metric_name}: {metric:.5f}')
-        return None
+                epoch_metrics = self.epoch_metrics(output, Y)
+                loss = epoch_metrics['loss']
+                metric_name = epoch_metrics['metric_name']
+                training_metric = epoch_metrics['training']
+                validation_metric = epoch_metrics['validation']
+                loss_arr[epoch] = loss
+                metric_arr[epoch] = (training_metric, validation_metric)
+                weights_arr[epoch] = self.weights
+                biases_arr[epoch] = self.biases
+                print(f'            Epoch: {epoch} --> Loss: {loss:.5f}, Training {metric_name}: {training_metric:.5f}, Validation {metric_name}: {validation_metric:.5f}')
+        return {'Loss': loss_arr, metric_name: metric_arr}
 
     """
     'fit' method is responsible for training the model.
@@ -252,11 +277,8 @@ class NeuralNetwork:
         learning_metrics (dictionary): logs of model metric as function of % of training data
     """
     def fit(self, X, y):
-        # learning curve: should produce logs of model metric as function of % of training data 
-        # used for training. No learning curve is produced for decision tree.
-        learning_metrics = None
         if self.autoencoder_layers is not None:
-            autoencoder = self.train_autoencoder(X)
+            autoencoder, autoencoder_learning_metrics = self.train_autoencoder(X)
         if self.prediction_type == 'classification':
             Y = pd.get_dummies(y) # one-hot encoding of target
             self.class_mappings(Y) # create class mappings
@@ -271,7 +293,11 @@ class NeuralNetwork:
             self.create_network() # create the neural network
         print('        Training feedforward network...')
         # learn the weights using batch gradient descent 
-        self.run_epochs(X, Y)
+        learning_metrics = self.run_epochs(X, Y)
+        if self.autoencoder_layers is not None:
+            learning_metrics = [autoencoder_learning_metrics, learning_metrics]
+        else:
+            learning_metrics = [learning_metrics]
         self.function = {'weights': self.weights, 'biases': self.biases}
         return learning_metrics
     
