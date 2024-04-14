@@ -27,12 +27,6 @@ class NeuralNetwork:
         self.hyperparameters = hyperparameters
 
     def class_mappings(self, Y):
-        # self.class_map = {}
-        # self.reverse_class_map = {}
-        # for i, cls in enumerate(data['target'].unique()):
-        #     self.class_map[cls] = i
-        #     self.reverse_class_map[i] = cls
-        # return None
         self.reverse_class_map = {}
         for i, cls in enumerate(Y.columns):
             self.reverse_class_map[i] = cls
@@ -109,11 +103,7 @@ class NeuralNetwork:
         self.activations[0] = X
         for i in range(len(self.network) - 1):
             # calculate the dot product of weights and activations
-            # self.activations[i] = self.check_over_under_flow(self.activations[i])
-            # self.weights[i] = self.check_over_under_flow(self.weights[i])
-            # self.biases[i] = self.check_over_under_flow(self.biases[i])
             dot_product = np.dot(self.activations[i], self.weights[i]) + self.biases[i]
-            # dot_product = self.check_over_under_flow(dot_product)
             # calculate the activations of the next layer
             if (i == len(self.network) - 2):
                 if self.is_autoencoder == False:
@@ -123,7 +113,6 @@ class NeuralNetwork:
                     elif self.prediction_type == 'regression':
                         self.activations[i+1] = dot_product
                 else:
-                    # self.activations[i+1] = self.sigmoid(dot_product)
                     self.activations[i+1] = dot_product
             else:
                 self.activations[i+1] = self.sigmoid(dot_product)
@@ -134,21 +123,13 @@ class NeuralNetwork:
         self.deltas[-1] = output - Y
         for i in range(len(self.network) - 2, -1, -1):
             # calculate the gradient of the weights
-            # self.activations[i] = self.check_over_under_flow(self.activations[i])
-            # self.deltas[i] = self.check_over_under_flow(self.deltas[i])
-            # self.weights[i] = self.check_over_under_flow(self.weights[i])
-
             self.gradients[i] = np.dot(self.activations[i].T, self.deltas[i])
-            # self.gradients[i] = self.check_over_under_flow(self.gradients[i])
-
             # after calculating gradients, apply gradient clipping
             for j in range(len(self.gradients)):
                 # mean = np.mean(self.gradients[j])
                 # print(f'            Mean of gradients: {j} --> {mean}')
                 np.clip(self.gradients[j], -self.clip_value, self.clip_value, out=self.gradients[j])
-
             # calculate the error in the hidden layers
-            # self.deltas[i] = np.dot(self.deltas[i+1], self.weights[i].T) * self.sigmoid_derivative(self.activations[i])
             if i == 0:
                 return None
             self.deltas[i-1] = np.dot(self.deltas[i], self.weights[i].T) * self.sigmoid_derivative(self.activations[i])
@@ -157,25 +138,16 @@ class NeuralNetwork:
     
     def l2_regularization(self):
         for i in range(len(self.network) - 1):
-            # self.weights[i] = self.check_over_under_flow(self.weights[i])
-            # self.gradients[i] = self.check_over_under_flow(self.gradients[i])
             self.gradients[i] += self.l2 * self.weights[i]
         return None
 
     def update_weights(self):
         for i in range(len(self.network) - 1):
             # update the weights
-            # self.gradients[i] = self.check_over_under_flow(self.gradients[i])
-            # self.weights[i] = self.check_over_under_flow(self.weights[i])
             self.weights[i] -= self.learning_rate * self.gradients[i]
             # update the biases
-            # self.deltas[i] = self.check_over_under_flow(self.deltas[i])
-            # delta_bias = np.sum(self.deltas[i], axis=0, keepdims=True)
             delta_bias = np.sum(self.gradients[i], axis=0, keepdims=True)  #try gradients instead to update bias
-            # delta_bias = self.check_over_under_flow(delta_bias)
-            # self.biases[i] = self.check_over_under_flow(self.biases[i])
             self.biases[i] -= self.learning_rate * delta_bias
-            # self.biases[i] = self.check_over_under_flow(self.biases[i])
         return None
     
     def calculate_loss(self, output, Y):
@@ -254,7 +226,7 @@ class NeuralNetwork:
             self.update_weights()
             ### debug
             flag = any(np.isnan(weight_matrix).any() for weight_matrix in self.weights)
-            if flag or epoch == 1500:
+            if flag or epoch == 100:
                 debug = ''
             if epoch % 100 == 0 and epoch != 0:
                 epoch_metrics = self.epoch_metrics(output, Y)

@@ -31,7 +31,7 @@ class Dashboard:
     def visualize(self, metrics, logs):
         if len(logs['learning_metrics']) != 0:
             learning_curve_figs = self.plot_learning_curve(logs['learning_metrics'])
-            # weights_biases_figs = self.plot_weights_biases(logs['learning_metrics'])
+            weights_biases_figs = self.plot_weights_biases(logs['learning_metrics'])
             for id, learning_curve_fig in enumerate(learning_curve_figs):
                 self.export_dashboard(learning_curve_fig, None, id=id+1)
         if len(logs['validation_metrics']) != 0:
