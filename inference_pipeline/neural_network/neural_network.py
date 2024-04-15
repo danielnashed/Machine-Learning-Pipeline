@@ -2,6 +2,50 @@ import pandas as pd
 import numpy as np
 import copy
 
+"""
+This module contains the NeuralNetwork class which is used to create a feedforward neural network
+for training and predicting target values. The neural network is built using batch gradient descent 
+and the backpropagation algorithm and can be used for both classification and regression tasks. It 
+also supports the use of an autoencoder neural network for learning a compressed representation of the 
+input data. In addition, the class can also be used as a linear model to perform linear regression or 
+logistic regression by setting the number of hidden layers to 0 in the config file.
+
+The NeuralNetwork class contains the following attributes:
+    - hyperparameters: hyperparameters for the model
+    - prediction_type: classification or regression
+    - function: function learned from training data
+    - positive_class: positive class (if binary classification is used)
+    - num_classes: number of classes (if multi-class classification is used)
+    - column_names: column names for the dataset
+    - classes: unique classes in the training data
+    - validation_set: validation set for testing during epochs
+    - clip_value: clip value for gradient clipping
+    - autoencoder_layers: autoencoder hidden layers
+    - is_autoencoder: is the network an autoencoder?
+
+The NeuralNetwork class contains the following methods:
+    - set_params: set the hyperparameters for the model
+    - class_mappings: create mappings between class labels and integers
+    - size_of_layers: calculate the number of nodes in each layer of the neural network
+    - create_network: initialize the weights, biases, deltas, gradients, and activations for the neural network
+    - check_over_under_flow: check if the input values are NaN or infinite
+    - sigmoid: calculate the sigmoid function 
+    - sigmoid_derivative: calculate the derivative of the sigmoid function
+    - softmax: calculate the softmax function
+    - forward_propagation: calculate the activations of the neurons in all layers of the neural network
+    - back_propagation: calculate the gradient of the loss function with respect to the weights in each layer
+    - l2_regularization: calculate the L2 regularization term for the weights in each layer
+    - update_weights: update the weights and biases in each layer of the neural network
+    - calculate_loss: calculate the loss function of the neural network
+    - calculate_accuracy: calculate the accuracy of the neural network
+    - calculate_mse: calculate the mean squared error of the neural network
+    - train_autoencoder: train the autoencoder neural network
+    - epoch_metrics: calculate the loss and metric values of the neural network at each epoch
+    - run_epochs: run the training epochs of the neural network
+    - fit: train the model using the training data
+    - predict: make predictions using the trained model
+"""
+
 class NeuralNetwork:
     def __init__(self):
         self.hyperparameters = None # hyperparameters for the model
@@ -12,7 +56,7 @@ class NeuralNetwork:
         self.column_names = None # column names for the dataset
         self.classes = None # unique classes in the training data
         self.validation_set = None # validation set for testing during epochs
-        self.clip_value = 1 # clip value for gradient clipping
+        self.clip_value = 10 # clip value for gradient clipping
         self.autoencoder_layers = None # autoencoder hidden layers
         self.is_autoencoder = False # is the network an autoencoder?
 
@@ -310,11 +354,11 @@ class NeuralNetwork:
     def train_autoencoder(self, X):
         print('        Training autoencoder...')
         autoencoder = NeuralNetwork()
-        autoencoder.hyperparameters = {'eta': 0.01, 'mu': 0.05, 'epochs': 1000}
+        autoencoder.hyperparameters = {'eta': 0.001, 'mu': 0.05, 'epochs': 2000}
         for layer in self.autoencoder_layers:
             num_nodes = int(self.autoencoder_layers[layer])
             # number of nodes in hidden layer is 50% of number of features in input domain
-            num_nodes = int(len(X.iloc[0]) * 0.5)
+            num_nodes = int(len(X.iloc[0]) * 0.5) # this is a tunable hyperparameter
             self.autoencoder_layers[layer] = num_nodes
         autoencoder.hyperparameters.update(self.autoencoder_layers)
         autoencoder.prediction_type = 'regression' # always regression for autoencoder
@@ -390,6 +434,7 @@ class NeuralNetwork:
             self.update_weights() # update weights using gradients
             # calculate loss and metric values at each 100-th epoch
             if epoch % 100 == 0 and epoch != 0:
+                # self.learning_rate = self.learning_rate * 0.9 # decrease learning rate by 10% every 100 epochs
                 epoch_metrics = self.epoch_metrics(output, Y)
                 loss = epoch_metrics['loss']
                 metric_name = epoch_metrics['metric_name']

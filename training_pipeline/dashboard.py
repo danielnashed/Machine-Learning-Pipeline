@@ -38,18 +38,6 @@ class Dashboard:
             validation_curve_fig = self.plot_validation_curve(logs['validation_metrics'])
             self.export_dashboard(None, validation_curve_fig, id=None)
         return None
-    
-    # # Plot the learning curve (TO BE IMPLEMENTED LATER IN PROJECT 2)   
-    # def plot_learning_curve(self, learning_metrics):
-    #     print('Plotting the learning curve...')
-    #     # Create a figure and axis
-    #     fig, ax = plt.subplots(dpi = 300)
-    #     ax.set_title('Learning Curve (TO BE IMPLEMENTED LATER IN PROJECT 2)', fontsize=10)
-    #     ax.set_xlabel('Percent of Training Data Used')
-    #     ax.set_ylabel('Model Metric(s)')
-    #     plt.grid()
-    #     plt.tight_layout()
-    #     return fig
 
     # Plot the learning curve
     def plot_learning_curve(self, learning_metrics):
@@ -133,23 +121,6 @@ class Dashboard:
                         weight, bias = weight_bias
                         im1 = ax[0][n].imshow(weight, cmap='seismic', interpolation='nearest', vmin=-weights_vmax[n], vmax=weights_vmax[n])
                         im2 = ax[1][n].imshow(bias, cmap='seismic', interpolation='nearest', vmin=-biases_vmax[n], vmax=biases_vmax[n])
-                        # # Create an inset axes for the colorbar
-                        # axins1 = inset_axes(ax[0][n],
-                        #                     width=0.075, 
-                        #                     height=1.0, 
-                        #                     loc='center left',
-                        #                     # bbox_to_anchor=ax[0][n].bbox,
-                        #                     bbox_to_anchor=(1.05, 0.5),
-                        #                     bbox_transform=ax[0][n].transAxes,
-                        #                     borderpad=0.5)
-                        # axins2 = inset_axes(ax[1][n],
-                        #                     width=0.075, 
-                        #                     height=1.0, 
-                        #                     loc='center left',
-                        #                     # bbox_to_anchor=ax[1][n].bbox,
-                        #                     bbox_to_anchor=(1.05, 0.5),
-                        #                     bbox_transform=ax[1][n].transAxes,
-                        #                     borderpad=0.5)
                         cbar1 = plt.colorbar(im1, ax=ax[0][n])
                         # cbar1 = plt.colorbar(im1, cax=axins1)
                         cbar1.ax.tick_params(labelsize=5)
@@ -193,7 +164,7 @@ class Dashboard:
     def plot_validation_curve(self, validation_metrics):
         print('Plotting the validation curve...')
         # Create a figure and axis
-        fig, ax = plt.subplots(dpi = 300, constrained_layout=True)
+        fig, ax = plt.subplots(figsize=(12, 5), dpi = 300, constrained_layout=True)
         plt.grid()
         ax.set_title('Validation Curve', fontsize=10)
         ax.set_xlabel('Hyperparameters')
@@ -204,7 +175,9 @@ class Dashboard:
         # Extract the hyperparameters for each model
         for model in validation_metrics[0]:
             hyperparameters, _ = model
-            x_labels.append(str(hyperparameters))
+            formatted_hyperparameters = '\n'.join(str(hyperparameters).split(', '))
+            formatted_hyperparameters = formatted_hyperparameters.replace('{', '').replace('}', '').replace('hidden_layer_1_size', 'hidden_layer_1').replace('hidden_layer_2_size', 'hidden_layer_2')
+            x_labels.append(formatted_hyperparameters)
         # Extract the metrics for each model
         for metric in validation_metrics[0][0][1].items():
             y[metric[0]] = []
@@ -213,10 +186,15 @@ class Dashboard:
                 y[metric[0]].append(metrics[metric[0]])
         # Plot the hyperparameters and metrics
         for metric in y.items():
-            ax.scatter(range(x), metric[1])
-            ax.plot(range(x), metric[1], label = 'testing ' + metric[0])
+            ax.bar(range(x), metric[1], width=0.2, label = 'testing ' + metric[0], zorder=3)
+            # ax.scatter(range(x), metric[1])
+            # ax.plot(range(x), metric[1], label = 'testing ' + metric[0])
+        y_min = min(min(metric) for metric in y.values())
+        y_max = max(max(metric) for metric in y.values())
+        ax.set_ylim(y_min*0.975, y_max*1.01)
         ax.legend()
-        plt.xticks(range(x), x_labels, rotation=90)
+        plt.xticks(range(x), x_labels, rotation=0, fontsize=8)
+        fig.subplots_adjust(bottom=0.5)
         # plt.tight_layout()
         return fig
 
