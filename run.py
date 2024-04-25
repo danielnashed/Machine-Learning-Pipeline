@@ -2,9 +2,14 @@
 import os
 import sys
 from datetime import datetime
-from feature_pipeline import data_transformer
-from training_pipeline import learner, evaluator, dashboard
-from inference_pipeline import model as model_selector
+
+# from feature_pipeline import data_transformer # use for supervised learning models
+# from training_pipeline import learner, evaluator, dashboard # use for supervised learning models
+# from inference_pipeline import model as model_selector # use for supervised learning models
+
+from feature_pipeline import data_transformer_rl as data_transformer # use for reinforcement learning models
+from training_pipeline import learner_rl as learner, dashboard_rl as dashboard # use for reinforcement learning models
+from inference_pipeline import model_rl as model_selector # use for reinforcement learning models
 
 """
 This module contains the Pipeline class which is used to orchestrate the entire end-to-end
@@ -53,7 +58,7 @@ class Pipeline:
             directory = os.path.join(root_dir, 'datasets', 'Regression Data Sets', 'Computer Hardware')
         elif dataset == 'forestfires':
             directory = os.path.join(root_dir, 'datasets', 'Regression Data Sets', 'Forest Fires')
-        elif dataset == 'racetracks':
+        elif dataset == 'L-track' or dataset == 'O-track' or dataset == 'R-track' or dataset == 'W-track':
             directory = os.path.join(root_dir, 'datasets', 'Reinforcement Learning Data Sets', 'Racetracks')
         data_fullpath = os.path.join(directory, dataset) 
 
@@ -98,10 +103,10 @@ class Pipeline:
 
 def main():
     config = {
-        'model': 'neural_network',       # choose from 'null_model', 'knn', 'condensed_knn', 'decision_tree', 'neural_network'
-        'dataset': 'house-votes-84', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'racetracks'
+        'model': 'reinforcement_learning',       # choose from 'null_model', 'knn', 'condensed_knn', 'decision_tree', 'neural_network', 'reinforcement_learning'
+        'dataset': 'L-track', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'L-track', 'O-track', 'R-track', 'W-track'
         'mode': 'training',          # choose from 'training', 'inference'
-        'cross_validation_splits': 5 # number of experiments 'k' to run k x 2 cross validation
+        'cross_validation_splits': None # number of experiments 'k' to run k x 2 cross validation
     }
     pipeline = Pipeline(config)
     pipeline.run()
