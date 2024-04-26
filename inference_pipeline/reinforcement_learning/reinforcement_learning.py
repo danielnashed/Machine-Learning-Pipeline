@@ -256,7 +256,7 @@ class ReinforcementLearning:
         if self.engine == 'value_iteration':
             policy = self.value_iteration(world)
         elif self.engine == 'q_learning':
-            # policy = engine(world) # learn optimal policy
+            policy = self.q_learning(world) # learn optimal policy
             pass
         elif self.engine == 'sarsa':
             # policy = engine(world) # learn optimal policy
@@ -288,7 +288,6 @@ class ReinforcementLearning:
         else:
             print('         Policy contains loops. Failed to reach goal state.')
             return path
-            # new_state_index = current_state_index
         path.append((current_state, action, new_state))
         terrain = self.S[new_state_index]
         while terrain != self.goal_state:
@@ -303,7 +302,6 @@ class ReinforcementLearning:
             if self.inside_boundary(new_state):
                 new_state_index = self.state_to_index[new_state]
             else:
-                # new_state_index = current_state_index
                 print('         Policy contains loops. Failed to reach goal state.')
                 return path
             path.append((current_state, action, new_state))
