@@ -6,6 +6,7 @@ import time
 import configparser
 import math
 import numpy as np
+from inference_pipeline.reinforcement_learning import path_visualizer as __path_visualizer__
 
 # [description] this class is responsible for training the model and tuning its hyperparameters. It
 # also exports the model and logs for the model.
@@ -19,6 +20,7 @@ class Learner:
         self.output = output # Output directory
         self.logs = {'validation_metrics': [], 'learning_metrics': []}
         self.favorite_metric = self.get_favorite_metric() # Get the favorite metric for model selection
+        self.num_exps =  int(dict(self.config.items('model'))['num_exps']) # Number of training iterations
     
     # Get the favorite metric for model selection
     def get_favorite_metric(self):
@@ -72,6 +74,7 @@ class Learner:
         print('\nTraining the model...')
         metrics_all_experiements = []
         models = []
+        self.paths = []
         # create a deep copy of the model to save it
         model = copy.deepcopy(self.model)
         learning_metrics = model.fit(data) # learn optimal policy
@@ -79,11 +82,12 @@ class Learner:
         self.save_logs(validation_metrics = None, learning_metrics = {'model': model, 'learning_metrics': learning_metrics})
         models.append(model) # save the model
         # for each experiment, apply the policy and evaluate the path taken by agent
-        for i in range(10):
-            print(f"    Experiment: {i + 1} of {10}")
+        for i in range(self.num_exps):
+            print(f"    Experiment: {i + 1} of {self.num_exps}")
             path, path_metrics = model.predict() # apply optimal policy to drive agent in world
             # evaluate the model and save the metrics
             metrics_all_experiements.append(path_metrics)
+            self.paths.append(path) # save the path
         # average the metrics for all experiments
         metrics_average, metrics_std = self.get_stats(metrics_all_experiements)
         # select the best model based on the favorite metric
@@ -141,6 +145,13 @@ class Learner:
         full_path = os.path.join(self.output, model_name + '.pickle')
         with open(full_path, 'wb') as f:
             pickle.dump(self.model, f)
+        # export the path taken by agent for all 10 experiments
+        directory_image_path = os.path.join(self.output, 'paths')
+        os.makedirs(directory_image_path, exist_ok=True)
+        for i, path in enumerate(self.paths):
+            image_path = os.path.join(directory_image_path, f'path_{i+1}.txt')
+            path_visualizer = __path_visualizer__.PathVisualizer(self.model, image_path)
+            path_visualizer.visualize_path(path)
         return None
 
     # Run the learner

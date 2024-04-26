@@ -71,6 +71,7 @@ class Model:
         self.model.costs = ast.literal_eval(model_parameters['costs']) # costs for each state
         self.model.transition = ast.literal_eval(model_parameters['transition']) # transition probabilities
         self.model.velocity_limit = list(map(int, model_parameters['velocity_limit'].replace(' ', '').replace('[', '').replace(']', '').split(',')))
+        self.model.training_iterations = int(model_parameters['training_iterations']) # number of training iterations
         self.model.reward = int(model_parameters['reward']) # reward for goal state
         self.model.alpha = float(model_parameters['alpha']) # learning rate
         self.model.gamma = float(model_parameters['gamma']) # discount factor

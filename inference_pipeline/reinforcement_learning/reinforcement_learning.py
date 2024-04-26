@@ -19,6 +19,7 @@ class ReinforcementLearning:
         self.costs = None # costs for each state
         self.transition = None # transition probabilities
         self.velocity_limit = None # velocity limits
+        self.training_iterations = 100 # number of training iterations
         self.reward = None # reward for goal state
         self.alpha = None # learning rate
         self.gamma = None # discount factor
@@ -34,17 +35,6 @@ class ReinforcementLearning:
     """
     def set_params(self, hyperparameters):
         self.hyperparameters = hyperparameters
-
-    # def convert_tuples_2_objects(self, states):
-    #     S = []
-    #     for state in states:
-    #         state_obj = State()
-    #         state_obj.x = state[0]
-    #         state_obj.y = state[1]
-    #         state_obj.v_x = state[2]
-    #         state_obj.v_y = state[3]
-    #         S.append(state_obj)
-    #     return S
 
     def mapping(self, world):
         x = list(range(len(world[0])))
@@ -63,72 +53,6 @@ class ReinforcementLearning:
             S[i] = world[state[1]][state[0]] # get terrain of state
         self.S = S
         return S
-
-    # def state_to_index(self, row, col, num_rows, num_cols):
-    #     # check if the state is out of the grid before creating an index
-    #     if row < 0 or col < 0 or row >= num_rows or col >= num_cols:
-    #         return None
-    #     return row * num_cols + col
-    
-    # def index_to_state(self, index, num_cols):
-    #     return index % num_cols, index // num_cols # state must be (x, y) not (y, x)  
-
-    # def flatten(self, world):
-    #     num_rows = len(world)
-    #     num_cols = len(world[0])
-    #     S = {} # key: state index, value: terrain
-    #     for row, sublist in enumerate(world):
-    #         for col, item in enumerate(sublist):
-    #             S[self.state_to_index(row, col, num_rows, num_cols)] = item
-    #     return S  
-
-    # def create_states(self, world):
-    #     num_rows = len(world)
-    #     num_cols = len(world[0])
-    #     num_x_velocities = len(range(self.velocity_limit[0], self.velocity_limit[1] + 1))
-    #     num_y_velocities = len(range(self.velocity_limit[0], self.velocity_limit[1] + 1))
-    #     S = np.zeros((num_rows, num_cols, num_x_velocities, num_y_velocities))
-    #     # S = {} # key: state index, value: terrain
-    #     # for row, sublist in enumerate(world):
-    #     #     for col, item in enumerate(sublist):
-    #     #         S[self.state_to_index(row, col, num_rows, num_cols)] = item
-    #     return S  
-
-    # def initialize_rewards(self, R, S):
-    #     for i in range(len(R)): # i is row number
-    #         for j in range(len(R[0])): # j is col number
-    #             current_state = State() # create a new state object
-    #             current_state.x = j # x is col number
-    #             current_state.y = i # y is row number
-    #             terrain = S[i][j]  # get terrain of the current state
-    #             # set reward if current state is the goal regardless of action
-    #             if terrain == self.goal_state:
-    #                 R[s]= [self.reward for action in R[s]]
-    #             else:
-    #                 for a in range(len(R[0])): # a is an action index
-    #                     action = self.actions[a] # action is a tuple (dx, dy)
-    #                     new_state = (current_state[0] + action[0], current_state[1] + action[1]) # move to new state
-    #                     new_state_index = state_to_index(new_state[1], new_state[0], num_rows, num_cols) # convert (x, y) to state index
-    #                     if new_state_index is None or new_state_index not in S.keys(): # check if new state is within world
-    #                         R[s][a] = -999
-    #                         continue # skip if new state is outside the world
-    #                     terrain = S[new_state_index] # get terrain of the new state
-    #                     if terrain == self.forbidden_state: # walls are forbidden 
-    #                         R[s][a] = -999
-    #                         continue
-    #                     R[s][a] = self.costs[terrain] # set cost to enter new state terrain
-    #     return R
-    #     pass
-
-    # def apply_kinematics(self, current_state, action):
-    #     new_state = copy.deepcopy(current_state)
-    #     # update velocity 
-    #     new_state.v_x += action[0] # new velocity_x = current velocity_x + acceleration_x
-    #     new_state.v_y += action[1] # new velocity_y = current velocity_y + acceleration_y
-    #     # update position
-    #     new_state.x += new_state.v_x # new position_x = current position_x + new velocity_x
-    #     new_state.y += new_state.v_y # new position_y = current position_y + new velocity_y
-    #     return new_state
 
     def inside_boundary(self, state):
         x, y, x_vel, y_vel = state
@@ -163,61 +87,16 @@ class ReinforcementLearning:
                     action = self.actions[a] # action is a tuple (ddx, ddy)
                     new_state = self.apply_kinematics(current_state, action)
                     if not self.inside_boundary(new_state):
-                        R[s][a] = None
+                        # R[s][a] = None
+                        R[s][a] = -9999
                         continue # skip if new state is outside the world
                     new_state_index = self.state_to_index[new_state]
                     terrain = S[new_state_index] # get terrain of the new state
-                    if terrain == self.forbidden_state: # walls are forbidden 
-                        R[s][a] = None ## FIX LATER
-                        continue
+                    # if terrain == self.forbidden_state: # walls are forbidden 
+                    #     R[s][a] = None ## FIX LATER
+                    #     continue
                     R[s][a] = self.costs[terrain] # set cost to enter new state terrain
         return R
-
-    ############################################################
-    # def initialize_rewards(self, R, S, num_cols, num_rows, num_x_vel, num_y_vel, num_x_accel, num_y_accel):
-    #     for x in range(num_cols):
-    #         for y in range(num_rows):
-    #             for v_x in range(num_x_vel):
-    #                 for v_y in range(num_y_vel):
-    #                     current_state = State()
-    #                     current_state.x = x
-    #                     current_state.y = y
-    #                     current_state.v_x = v_x
-    #                     current_state.v_y = v_y
-    #                     terrain = self.world[y][x]  # get terrain of the current state
-    #                     # set reward if current state is the goal regardless of action
-    #                     if terrain != self.goal_state:
-    #                         for a_x in range(num_x_accel):
-    #                             for a_y in range(num_y_accel):
-    #                                 action = self.actions[a_x][a_y] # action is a tuple (ddx, ddy)
-    #                                 pass
-
-    #     for s in range(len(R)): # s is a state index in S
-    #         state = self.index_to_state(s, num_cols) # convert state index to (x, y)
-    #         current_state = State() # create a new state object
-    #         current_state.x = state[0]
-    #         current_state.y = state[1]
-    #         current_state.v_x = 0
-    #         current_state.v_y = 0
-    #         terrain = S[s]  # get terrain of the current state
-    #         # set reward if current state is the goal regardless of action
-    #         if terrain == self.goal_state:
-    #             R[s]= [self.reward for action in R[s]]
-    #         else:
-    #             for a in range(len(R[0])): # a is an action index
-    #                 action = self.actions[a] # action is a tuple (ddx, ddy)
-    #                 new_state = self.apply_kinematics(current_state, action)
-    #                 # new_state = (current_state[0] + action[0], current_state[1] + action[1]) # move to new state
-    #                 new_state_index = self.state_to_index(new_state.y, new_state.x, num_rows, num_cols) # convert (x, y) to state index
-    #                 if new_state_index is None or new_state_index not in S.keys(): # check if new state is within world
-    #                     R[s][a] = -999
-    #                     continue # skip if new state is outside the world
-    #                 terrain = S[new_state_index] # get terrain of the new state
-    #                 if terrain == self.forbidden_state: # walls are forbidden 
-    #                     R[s][a] = -999
-    #                     continue
-    #                 R[s][a] = self.costs[terrain] # set cost to enter new state terrain
-    #     return R
 
     # def reorder_states(self, S): # recursive 
     #     new_S = {}
@@ -233,39 +112,20 @@ class ReinforcementLearning:
         num_states = num_rows * num_cols * num_x_vel * num_y_vel
         num_actions = len(self.actions)
         S = self.mapping(world) # states
-        # S = self.reorder_states(S) # reorder states starting from goal state
         V = [-9999 for _ in range(num_states)] # value function
-        Vlast = [-9998 for _ in range(num_states)] # copy of value function
+        Vlast = [-99999999 for _ in range(num_states)] # copy of value function
         R = [[0]*num_actions for _ in range(num_states)] # reward function
         R = self.initialize_rewards(R, S, num_rows, num_cols)
         Q = [[-9999]*num_actions for _ in range(num_states)] # Q function
         P = [None for _ in range(num_states)] # policy
 
-
-
-        # num_x_accel = len(self.actions[0])
-        # num_y_accel = len(self.actions[1])
-        # self.actions = np.array([self.actions[:] for _ in range(2)])
-        # # num_actions = len(self.actions)
-        # S = np.zeros((num_cols, num_rows, num_x_vel, num_y_vel)) # states
-        # V = np.zeros((num_cols, num_rows, num_x_vel, num_y_vel)) # value function
-        # Vlast = np.ones((num_cols, num_rows, num_x_vel, num_y_vel)) # copy of value function
-        # R = np.zeros((num_cols, num_rows, num_x_vel, num_y_vel, num_x_accel, num_y_accel)) # reward function
-        # R = self.initialize_rewards(R, S, num_cols, num_rows, num_x_vel, num_y_vel, num_x_accel, num_y_accel)
-        # Q = np.zeros((num_cols, num_rows, num_x_vel, num_y_vel, num_x_accel, num_y_accel)) # Q function
-        # P = np.empty((num_cols, num_rows, num_x_vel, num_y_vel)) # policy
-        # P.fill(None)
-
-
-        # S = self.create_states(world) # states
-        # S = self.flatten(world) # states
-
-        # V = [[0]*num_cols for _ in range(num_rows)] # value function
-        # Vlast = [[1]*num_cols for _ in range(num_rows)] # value function
-        # R = [[0]*num_actions for _ in range(num_states)] # reward function
-        # R = self.initialize_rewards(R, S)
-        # Q = [[0]*num_actions for _ in range(num_states)] # Q function
-        # P = [[0]*num_cols for _ in range(num_rows)] # polic
+        # # remove invalid states from S
+        # valid_S = copy.deepcopy(S)
+        # for s in S.keys():
+        #     is_valid = self.valid(s)
+        #     if not is_valid:
+        #         valid_S.pop(s)
+        # S = valid_S
 
         return (S, V, Vlast, R, Q, P, num_rows, num_cols)
     
@@ -274,27 +134,6 @@ class ReinforcementLearning:
         array2 = np.array(Vlast)
         self.learning_metrics.append(np.linalg.norm(array1 - array2)) # log the difference between V and Vlast
         return np.any(np.abs(array1 - array2) > epsilon)
-        # for v1, v2 in zip(V, Vlast): # compare element wise
-        #     if abs(v1 - v2) > epsilon:
-        #         return True
-        # return False
-    
-    # def successors(self, current_state, desired_action, actions, S, num_rows, num_cols):
-    #     children = []
-    #     for action in actions:
-    #         if action == desired_action:
-    #             probability = self.transition['success'] 
-    #         else:
-    #             probability = self.transition['fail']
-    #         new_state = (current_state[0] + action[0], current_state[1] + action[1]) # new state is (x, y)
-    #         new_state_index = self.state_to_index(new_state[1], new_state[0], num_rows, num_cols) # convert (x, y) to state index
-    #         if new_state_index is None or new_state_index not in S.keys():
-    #             continue # skip if new state is outside the world
-    #         terrain = S[new_state_index] # get terrain of new state
-    #         if terrain == self.forbidden_state:
-    #             continue # apply crash algorithm
-    #         children.append((new_state_index, probability)) # add new state to children
-    #     return children
 
     def successors(self, current_state, desired_action, S, num_rows, num_cols):
         children = []
@@ -324,13 +163,7 @@ class ReinforcementLearning:
         return children
     
     def stochastic_future_reward(self, s, a, actions, S, Vlast, num_rows, num_cols):
-        # current_state = self.index_to_state(s, num_cols) # convert state index to (x, y)
         current_state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
-        # current_state = State() # create a new state object
-        # current_state.x = state[0]
-        # current_state.y = state[1]
-        # current_state.v_x = 0
-        # current_state.v_y = 0
         desired_action = actions[a] # action is a tuple (ddx, ddy)
         new_states = self.successors(current_state, desired_action, S, num_rows, num_cols)
         future_reward = 0
@@ -341,41 +174,61 @@ class ReinforcementLearning:
     def get_best_action(self, Q, s):
         lst = Q[s]
         # if there are no actions to take in state s, then return None
-        if all([x is None for x in lst]):
-            return None
+        # if all([x is None for x in lst]):
+        #     return None
         # if there are actions to take in state s, then return the index of the best action
         lst = [x if x is not None else -9999 for x in lst] # replace None with -999 to use max function
         action_index = lst.index(max(lst)) # index of best action in Q[s]
         return action_index
+    
+    def valid(self, s):
+        # check if state is on border of boundary 
+        state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
+        x, y = state[0:2]
+        on_border = False
+        # [1] check if state is on border of boundary
+        if x == 0 or x == len(self.world[0]) - 1 or y == 0 or y == len(self.world) - 1:
+            on_border = True
+        # [2] check if velocity leads to a state outside the boundary
+        if on_border:
+            x_vel, y_vel = state[2:]
+            if x == 0 and x_vel <= -2:
+                return False
+            if x == len(self.world[0]) - 1 and x_vel >= 2:
+                return False
+            if y == 0 and y_vel <= -2:
+                return False
+            if y == len(self.world) - 1 and y_vel >= 2:
+                return False
+        return True
 
     def value_iteration(self, world):
         S, V, Vlast, R, Q, P, num_rows, num_cols = self.initialize_vars(world)
-        epsilon = 1e-8
+        # epsilon = 1e-3
+        # epsilon = 0.1
+        epsilon = 0.1
         t = 1
-        while (self.keep_updating(V, Vlast, epsilon) and t < 100):
+        while (self.keep_updating(V, Vlast, epsilon) and t < self.training_iterations):
             start_time = time.time()
-            if t == 69:
-                debug = 'true'
             Vlast = copy.deepcopy(V)  
             for s, terrain in S.items(): # key: state_index, value: terrain
-                if terrain == self.forbidden_state:
-                    continue # do nothing if you are on a forbidden state since you cant be in one in first place
+                # if terrain == self.forbidden_state:
+                #     continue # do nothing if you are on a forbidden state since you cant be in one in first place
                 for a, _ in enumerate(self.actions): # a is action index
-                    if R[s][a] is None:
-                        Q[s][a] = None
-                        continue
+                    # if R[s][a] is None:
+                    #     Q[s][a] = None
+                    #     continue
                     Q[s][a] = R[s][a] + self.gamma * self.stochastic_future_reward(s, a, self.actions, S, Vlast, num_rows, num_cols) 
                 P[s] = self.get_best_action(Q, s) # return index of best action to take in state s
-                if P[s] is None:
-                    continue
+                # if P[s] is None:
+                #     continue
                 V[s] = Q[s][P[s]] # return value of best action to take in state s
             end_time = time.time()
-            print(f'        Iteration {t} --> {end_time - start_time:.2f} s')
+            print(f'        Iteration {t}, delta V: {self.learning_metrics[-1]}, {end_time - start_time:.2f} s')
             t += 1
         self.training_iterations = t
         print('Policy learning complete...')
         return P
-        # return self.convert_policy_to_world(P, self.actions, num_cols)
 
 
     """
@@ -409,7 +262,8 @@ class ReinforcementLearning:
             # policy = engine(world) # learn optimal policy
             pass
         self.function = policy
-        return self.learning_metrics
+        # return self.learning_metrics
+        return None
     
     def initialize_agent(self):
         # get index of all start states in world 
@@ -425,14 +279,14 @@ class ReinforcementLearning:
         current_state = self.index_to_state[current_state_index]
         action_index = policy[current_state_index]
         if action_index is None:
-            print('Policy contains a None action. Failed to reach goal state.')
+            print('         Policy contains a None action. Failed to reach goal state.')
             return path
         action = self.actions[action_index]
         new_state = self.apply_kinematics(current_state, action)
         if self.inside_boundary(new_state):
             new_state_index = self.state_to_index[new_state]
         else:
-            print('Policy contains loops. Failed to reach goal state.')
+            print('         Policy contains loops. Failed to reach goal state.')
             return path
             # new_state_index = current_state_index
         path.append((current_state, action, new_state))
