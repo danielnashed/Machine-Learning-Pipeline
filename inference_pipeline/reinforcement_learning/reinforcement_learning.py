@@ -178,6 +178,9 @@ class ReinforcementLearning:
         #     return None
         # if there are actions to take in state s, then return the index of the best action
         lst = [x if x is not None else -9999 for x in lst] # replace None with -999 to use max function
+        # if all actions are equally of equal value, choose an action randomly 
+        if all([x == -9999 for x in lst]):
+            return np.random.choice(range(len(lst)))
         action_index = lst.index(max(lst)) # index of best action in Q[s]
         return action_index
     
@@ -201,6 +204,41 @@ class ReinforcementLearning:
             if y == len(self.world) - 1 and y_vel >= 2:
                 return False
         return True
+    
+    def choose_start_state(self, S, t): # another solution: maybe choose states with probability to inverse of their frequency of visit
+        normalizer_power = 3
+        peak_time = 0.3
+        horizon = min(1, 10**(-normalizer_power) * np.exp(t * normalizer_power * np.log2(10) / (peak_time * self.training_iterations))) # exponential growth of horizon from 0.001 to 1
+        num_states = len(S)
+        goal_state_indices = [index for index, terrain in S.items() if terrain == self.goal_state]
+        min_goal_state_index = min(goal_state_indices)
+        max_goal_state_index = max(goal_state_indices)
+        lower_limit = min_goal_state_index - (horizon * num_states) # maybe try including 0.5 factor
+        upper_limit = max_goal_state_index + (horizon * num_states)
+        lower_limit = int(max(0, lower_limit))
+        upper_limit = int(min(num_states - 1, upper_limit))
+        s = np.random.choice(range(lower_limit, upper_limit))
+        s = np.random.choice(range(min_goal_state_index, max_goal_state_index))
+        # kep history of visits to a state and over time, increase probability of visiting states that have not been visited
+        return s, horizon
+    
+    def epsilon_greedy_choice(self, Q, s, t):
+        # epsilon = 0.25 * (1 / (t + 1)) # epsilon decreases over time (exploration-exploitation tradeoff)
+        epsilon = 0.5 * np.exp(-t / (0.8 * self.training_iterations)) # exponential decay of epsilon
+        values = list(Q[s])
+        random_num = np.random.uniform(0, 1)
+        # exploration choice has probability epsilon of choosing a random action
+        if random_num < epsilon:
+            return np.random.choice(range(len(values)))
+        # exploitation choice (greedy) has probability 1 - epsilon of choosing the best action
+        else:
+            return self.get_best_action(Q, s)
+    
+    def extract_policy(self, Q):
+        P = [None for _ in range(len(Q))]
+        for s in range(len(Q)):
+            P[s] = self.get_best_action(Q, s)
+        return P
 
     def value_iteration(self, world):
         S, V, Vlast, R, Q, P, num_rows, num_cols = self.initialize_vars(world)
@@ -229,7 +267,70 @@ class ReinforcementLearning:
         self.training_iterations = t
         print('Policy learning complete...')
         return P
+    
+    def q_learning(self, world):
+        S, _, _, R, Q, _, _, _ = self.initialize_vars(world)
+        for t in range(self.training_iterations + 1):
+            t_inner = 0
+            start_time = time.time()
+            s, horizon = self.choose_start_state(S, t) # initialize state randomly close to terminal state
+            while S[s] != self.goal_state:
+                t_inner += 1
+                a = self.epsilon_greedy_choice(Q, s, t) # choose action using epsilon-greedy policy
+                action = self.actions[a] # action is a tuple (ddx, ddy)
+                state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
+                # if t_inner % 1 == 0:
+                #     print(f'            Inner Iteration {t_inner} --> random state: {state}, terrain: {S[s]}')
+                new_state = self.apply_kinematics(state, action) # apply action to get new state
+                if not self.inside_boundary(new_state):
+                    # print('            Agent outside boundary')
+                    Q[s][a] = -99999
+                    s, horizon = self.choose_start_state(S, t) # initialize state randomly close to terminal state
+                    continue
+                new_s = self.state_to_index[new_state] # convert new state to state index
+                ### is s in R the new state or current state ????
+                Q[s][a] += self.alpha * (R[s][a] + (self.gamma * max(Q[new_s])) - Q[s][a]) # update Q function 
+                s = new_s # update state
+            print(f'                Inner Iteration {t_inner+1} --> random state: {self.index_to_state[s]}, terrain: {S[s]}')
+            end_time = time.time()
+            print(f'        Outer Iteration {t}, horizon: {horizon:.5f}, {end_time - start_time:.2f} s')
+        P = self.extract_policy(Q) # extract policy from Q function
+        print('Policy learning complete...')
+        return P
 
+
+    def sarsa(self, world):
+        S, _, _, R, Q, _, _, _ = self.initialize_vars(world)
+        for t in range(self.training_iterations + 1):
+            t_inner = 0
+            start_time = time.time()
+            s, horizon = self.choose_start_state(S, t) # initialize state randomly close to terminal state
+            a = self.epsilon_greedy_choice(Q, s, t) # choose action using epsilon-greedy policy
+            while S[s] != self.goal_state:
+                action = self.actions[a] # action is a tuple (ddx, ddy)
+                state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
+                t_inner += 1
+                # if t_inner % 1 == 0:
+                #     print(f'            Inner Iteration {t_inner} --> random state: {state}, terrain: {S[s]}')
+                new_state = self.apply_kinematics(state, action) # apply action to get new state
+                if not self.inside_boundary(new_state):
+                    # print('            Agent outside boundary')
+                    Q[s][a] = -99999
+                    s, horizon = self.choose_start_state(S, t) # initialize state randomly close to terminal state
+                    a = self.epsilon_greedy_choice(Q, s, t) # choose action using epsilon-greedy policy
+                    continue
+                new_s = self.state_to_index[new_state] # convert new state to state index
+                new_a = self.epsilon_greedy_choice(Q, new_s, t) # choose action using epsilon-greedy policy
+                ### is s in R the new state or current state ????
+                Q[s][a] += self.alpha * (R[s][a] + (self.gamma * Q[new_s][new_a]) - Q[s][a]) # update Q function 
+                s = new_s # update state
+                a = new_a # update action
+            print(f'                Inner Iteration {t_inner+1} --> random state: {self.index_to_state[s]}, terrain: {S[s]}')
+            end_time = time.time()
+            print(f'        Outer Iteration {t}, horizon: {horizon:.5f}, {end_time - start_time:.2f} s')
+        P = self.extract_policy(Q) # extract policy from Q function
+        print('Policy learning complete...')
+        return P
 
     """
     'fit' method is responsible for training the model using the training data. The method first checks if
@@ -257,10 +358,8 @@ class ReinforcementLearning:
             policy = self.value_iteration(world)
         elif self.engine == 'q_learning':
             policy = self.q_learning(world) # learn optimal policy
-            pass
         elif self.engine == 'sarsa':
-            # policy = engine(world) # learn optimal policy
-            pass
+            policy = self.sarsa(world) # learn optimal policy
         self.function = policy
         # return self.learning_metrics
         return None
@@ -286,11 +385,12 @@ class ReinforcementLearning:
         if self.inside_boundary(new_state):
             new_state_index = self.state_to_index[new_state]
         else:
-            print('         Policy contains loops. Failed to reach goal state.')
+            print('         Policy generates path outside boundary. Failed to reach goal state.')
             return path
         path.append((current_state, action, new_state))
         terrain = self.S[new_state_index]
         while terrain != self.goal_state:
+            prev_state_index = current_state_index # pointer to prev state to detect self loop
             current_state_index = new_state_index
             current_state = self.index_to_state[current_state_index]
             action_index = policy[current_state_index]
@@ -301,8 +401,11 @@ class ReinforcementLearning:
             new_state = self.apply_kinematics(current_state, action)
             if self.inside_boundary(new_state):
                 new_state_index = self.state_to_index[new_state]
+                if new_state_index == prev_state_index:
+                    print('         Policy generates self loop. Failed to reach goal state.')
+                    return path
             else:
-                print('         Policy contains loops. Failed to reach goal state.')
+                print('         Policy generates path outside boundary. Failed to reach goal state.')
                 return path
             path.append((current_state, action, new_state))
             terrain = self.S[new_state_index]
