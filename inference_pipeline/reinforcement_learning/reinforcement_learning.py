@@ -3,12 +3,13 @@ import numpy as np
 import copy
 import itertools
 import time
+import random
 from inference_pipeline.reinforcement_learning import state as State
+from inference_pipeline.reinforcement_learning import bresenham_line as BresenhamLineAlgorithm
 
 class ReinforcementLearning:
     def __init__(self):
         self.hyperparameters = None # hyperparameters for the model
-        # self.state = State() # current state of the agent
         self.function = None # function learned from training data
         self.engine = None # engine for agent
         self.crash_algorithm = None # crash algorithm for agent
@@ -42,14 +43,12 @@ class ReinforcementLearning:
         x_vel = list(range(self.velocity_limit[0], self.velocity_limit[1] + 1))
         y_vel = list(range(self.velocity_limit[0], self.velocity_limit[1] + 1))
         states = list(itertools.product(x, y, x_vel, y_vel)) # create all combinations of x, y, x_vel, y_vel
-        # states = self.convert_tuples_2_objects(states) # convert list of tuples to list of objects
         S = {} # key: state index, value: terrain
         self.state_to_index = {}
         self.index_to_state = {}
         for i, state in enumerate(states):
             self.state_to_index[state] = i # mapping from state to index
             self.index_to_state[i] = state  # mapping from index to state
-            # S[i] = world[state.y][state.x] # get terrain of state
             S[i] = world[state[1]][state[0]] # get terrain of state
         self.S = S
         return S
@@ -87,7 +86,6 @@ class ReinforcementLearning:
                     action = self.actions[a] # action is a tuple (ddx, ddy)
                     new_state = self.apply_kinematics(current_state, action)
                     if not self.inside_boundary(new_state):
-                        # R[s][a] = None
                         R[s][a] = -9999
                         continue # skip if new state is outside the world
                     new_state_index = self.state_to_index[new_state]
@@ -97,12 +95,6 @@ class ReinforcementLearning:
                     #     continue
                     R[s][a] = self.costs[terrain] # set cost to enter new state terrain
         return R
-
-    # def reorder_states(self, S): # recursive 
-    #     new_S = {}
-    #     goal_states = [index for index, terrain in self.S.items() if terrain == self.goal_state]
-    #     pass
-    #     return S
 
     def initialize_vars(self, world):
         num_rows = len(world)
@@ -207,7 +199,7 @@ class ReinforcementLearning:
     
     def choose_start_state(self, S, t): # another solution: maybe choose states with probability to inverse of their frequency of visit
         normalizer_power = 3
-        peak_time = 0.3
+        peak_time = 0.1 # 0.3
         horizon = min(1, 10**(-normalizer_power) * np.exp(t * normalizer_power * np.log2(10) / (peak_time * self.training_iterations))) # exponential growth of horizon from 0.001 to 1
         num_states = len(S)
         goal_state_indices = [index for index, terrain in S.items() if terrain == self.goal_state]
@@ -217,8 +209,8 @@ class ReinforcementLearning:
         upper_limit = max_goal_state_index + (horizon * num_states)
         lower_limit = int(max(0, lower_limit))
         upper_limit = int(min(num_states - 1, upper_limit))
-        s = np.random.choice(range(lower_limit, upper_limit))
-        s = np.random.choice(range(min_goal_state_index, max_goal_state_index))
+        s = np.random.choice(range(lower_limit, upper_limit + 1))
+        s = np.random.choice(range(min_goal_state_index, max_goal_state_index + 1))
         # kep history of visits to a state and over time, increase probability of visiting states that have not been visited
         return s, horizon
     
@@ -233,6 +225,51 @@ class ReinforcementLearning:
         # exploitation choice (greedy) has probability 1 - epsilon of choosing the best action
         else:
             return self.get_best_action(Q, s)
+        
+    def find_nearby_state(self, x, y, offset=1):
+        unit_moves = [-1, 0, 1]
+        moves1 = list(itertools.product(unit_moves, unit_moves))
+        if offset == 1:
+            moves = moves1
+        else:
+            offset_moves = list(range(-offset, offset + 1))
+            moves2 = list(itertools.product(offset_moves, offset_moves))
+            moves = list(set(moves2) - set(moves1))
+        neighbors = []
+        for move in moves:
+            new_x = x + move[0]
+            new_y = y + move[1]
+            if self.inside_boundary((new_x, new_y, 0, 0)):
+                if self.world[new_y][new_x] != self.forbidden_state:
+                    neighbors.append((new_x, new_y))
+        if neighbors != []:
+                nearby_state = random.choice(neighbors)
+                return nearby_state # return a random nearby neighbor
+        else:
+            offset += 1
+            nearby_state = self.find_nearby_state(x, y, offset) # recursively find a nearby state
+        return nearby_state
+        
+    def handle_collision(self, state, new_state):
+        start = state[0:2] # start position as (x, y)
+        end = new_state[0:2] # end position as (x, y)
+        bresenham_line = BresenhamLineAlgorithm.BresenhamLine(start, end) # rasterize line between start and end
+        points = bresenham_line.draw_line() # get all grid points on line
+        for point in points:
+            x, y = point
+            if not self.inside_boundary((x, y, 0, 0)): # check if point is outside boundary
+                continue
+            if self.world[y][x] == self.forbidden_state:
+                # soft version --> reduce velocity to 0 and place agent near crash site
+                if self.crash_algorithm == 'soft':
+                    nearby_state = self.find_nearby_state(x, y) # find a nearby state to place agent
+                    return (nearby_state[0], nearby_state[1], 0, 0) # reset velocity to 0
+                # hard version --> reset agent to start state with velocity 0
+                elif self.crash_algorithm == 'harsh':
+                    s = self.initialize_agent() # pick a start state index at random
+                    start_state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
+                    return (start_state[0], start_state[1], 0, 0) # reset velocity to 0
+        return new_state
     
     def extract_policy(self, Q):
         P = [None for _ in range(len(Q))]
@@ -288,7 +325,6 @@ class ReinforcementLearning:
                     s, horizon = self.choose_start_state(S, t) # initialize state randomly close to terminal state
                     continue
                 new_s = self.state_to_index[new_state] # convert new state to state index
-                ### is s in R the new state or current state ????
                 Q[s][a] += self.alpha * (R[s][a] + (self.gamma * max(Q[new_s])) - Q[s][a]) # update Q function 
                 s = new_s # update state
             print(f'                Inner Iteration {t_inner+1} --> random state: {self.index_to_state[s]}, terrain: {S[s]}')
@@ -309,25 +345,29 @@ class ReinforcementLearning:
             while S[s] != self.goal_state:
                 action = self.actions[a] # action is a tuple (ddx, ddy)
                 state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
+                random_num = np.random.uniform(0, 1)
+                if random_num < self.transition['fail']:
+                    action = (0, 0) # no acceleration happens
                 t_inner += 1
                 # if t_inner % 1 == 0:
                 #     print(f'            Inner Iteration {t_inner} --> random state: {state}, terrain: {S[s]}')
                 new_state = self.apply_kinematics(state, action) # apply action to get new state
+                new_state = self.handle_collision(state, new_state) # handle collision with walls
                 if not self.inside_boundary(new_state):
-                    # print('            Agent outside boundary')
-                    Q[s][a] = -99999
+                    Q[s][a] = -99999 # do i ever enter this line ???
                     s, horizon = self.choose_start_state(S, t) # initialize state randomly close to terminal state
                     a = self.epsilon_greedy_choice(Q, s, t) # choose action using epsilon-greedy policy
                     continue
                 new_s = self.state_to_index[new_state] # convert new state to state index
                 new_a = self.epsilon_greedy_choice(Q, new_s, t) # choose action using epsilon-greedy policy
-                ### is s in R the new state or current state ????
                 Q[s][a] += self.alpha * (R[s][a] + (self.gamma * Q[new_s][new_a]) - Q[s][a]) # update Q function 
                 s = new_s # update state
                 a = new_a # update action
-            print(f'                Inner Iteration {t_inner+1} --> random state: {self.index_to_state[s]}, terrain: {S[s]}')
+            # print(f'                Inner Iteration {t_inner+1} --> random state: {self.index_to_state[s]}, terrain: {S[s]}')
             end_time = time.time()
-            print(f'        Outer Iteration {t}, horizon: {horizon:.5f}, {end_time - start_time:.2f} s')
+            average_Q = np.mean(Q)
+            max_Q = np.max(Q)
+            print(f'        Outer Iteration {t}, horizon: {horizon:.3f}, Q_mean: {average_Q:.3f}, Q_max: {max_Q:.3f}, inner iterations: {t_inner+1:0{4}d}, {end_time - start_time:.2f}s')
         P = self.extract_policy(Q) # extract policy from Q function
         print('Policy learning complete...')
         return P
@@ -371,24 +411,70 @@ class ReinforcementLearning:
         start_state_index = np.random.choice(start_state_indices)
         return start_state_index
     
+    # def create_path(self, start_state_index):
+    #     policy = self.function
+    #     path = []
+    #     current_state_index = start_state_index
+    #     current_state = self.index_to_state[current_state_index]
+    #     action_index = policy[current_state_index]
+    #     if action_index is None:
+    #         print('         Policy contains a None action. Failed to reach goal state.')
+    #         return path
+    #     action = self.actions[action_index]
+    #     new_state = self.apply_kinematics(current_state, action)
+    #     # path.append((current_state, action, new_state))
+    #     if self.inside_boundary(new_state):
+    #         new_state_index = self.state_to_index[new_state]
+    #     else:
+    #         print('         Policy generates path outside boundary. Failed to reach goal state.')
+    #         return path
+    #     path.append((current_state, action, new_state))
+    #     terrain = self.S[new_state_index]
+    #     while terrain != self.goal_state:
+    #         prev_state_index = current_state_index # pointer to prev state to detect self loop
+    #         current_state_index = new_state_index
+    #         current_state = self.index_to_state[current_state_index]
+    #         action_index = policy[current_state_index]
+    #         if action_index is None:
+    #             print('         Policy contains a None action. Failed to reach goal state.')
+    #             return path
+    #         action = self.actions[action_index]
+    #         new_state = self.apply_kinematics(current_state, action)
+    #         # path.append((current_state, action, new_state))
+    #         if self.inside_boundary(new_state):
+    #             new_state_index = self.state_to_index[new_state]
+    #             if new_state_index == prev_state_index:
+    #                 print('         Policy generates self loop. Failed to reach goal state.')
+    #                 return path
+    #         else:
+    #             print('         Policy generates path outside boundary. Failed to reach goal state.')
+    #             return path
+    #         path.append((current_state, action, new_state))
+    #         terrain = self.S[new_state_index]
+    #     return path
+
     def create_path(self, start_state_index):
         policy = self.function
         path = []
         current_state_index = start_state_index
-        current_state = self.index_to_state[current_state_index]
-        action_index = policy[current_state_index]
-        if action_index is None:
-            print('         Policy contains a None action. Failed to reach goal state.')
-            return path
-        action = self.actions[action_index]
-        new_state = self.apply_kinematics(current_state, action)
-        if self.inside_boundary(new_state):
-            new_state_index = self.state_to_index[new_state]
-        else:
-            print('         Policy generates path outside boundary. Failed to reach goal state.')
-            return path
-        path.append((current_state, action, new_state))
-        terrain = self.S[new_state_index]
+        new_state_index = start_state_index
+        count = 0 # count of self loops
+        terrain = ''
+        # current_state = self.index_to_state[current_state_index]
+        # action_index = policy[current_state_index]
+        # if action_index is None:
+        #     print('         Policy contains a None action. Failed to reach goal state.')
+        #     return path
+        # action = self.actions[action_index]
+        # new_state = self.apply_kinematics(current_state, action)
+        # # path.append((current_state, action, new_state))
+        # if self.inside_boundary(new_state):
+        #     new_state_index = self.state_to_index[new_state]
+        # else:
+        #     print('         Policy generates path outside boundary. Failed to reach goal state.')
+        #     return path
+        # path.append((current_state, action, new_state))
+        # terrain = self.S[new_state_index]
         while terrain != self.goal_state:
             prev_state_index = current_state_index # pointer to prev state to detect self loop
             current_state_index = new_state_index
@@ -398,12 +484,19 @@ class ReinforcementLearning:
                 print('         Policy contains a None action. Failed to reach goal state.')
                 return path
             action = self.actions[action_index]
+            random_num = np.random.uniform(0, 1)
+            if random_num < self.transition['fail']:
+                action = (0, 0) # no acceleration happens
             new_state = self.apply_kinematics(current_state, action)
+            new_state = self.handle_collision(current_state, new_state)
+            # path.append((current_state, action, new_state))
             if self.inside_boundary(new_state):
                 new_state_index = self.state_to_index[new_state]
                 if new_state_index == prev_state_index:
-                    print('         Policy generates self loop. Failed to reach goal state.')
-                    return path
+                    count += 1
+                    if count > 10:
+                        print('         Policy generates self loop. Failed to reach goal state.')
+                        return path
             else:
                 print('         Policy generates path outside boundary. Failed to reach goal state.')
                 return path

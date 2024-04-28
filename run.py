@@ -104,7 +104,7 @@ class Pipeline:
 def main():
     config = {
         'model': 'reinforcement_learning',       # choose from 'null_model', 'knn', 'condensed_knn', 'decision_tree', 'neural_network', 'reinforcement_learning'
-        'dataset': 'L-track', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'L-track', 'O-track', 'R-track', 'W-track'
+        'dataset': 'R-track', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'L-track', 'O-track', 'R-track', 'W-track'
         'mode': 'training',          # choose from 'training', 'inference'
         'cross_validation_splits': None # number of experiments 'k' to run k x 2 cross validation
     }
