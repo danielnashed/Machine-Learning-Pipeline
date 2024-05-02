@@ -114,13 +114,13 @@ class PathVisualizer:
         # add stats for average over all 5000 races 
         grid_string += '\n\n        POLICY STATS & PARAMETERS: ' + '\n'
         grid_string += '        Number of training iterations: ' + str(self.model.training_iterations) + '\n'
-        grid_string += '        Crash mode: ' + str(self.model.crash_algorithm) + '\n'
-        grid_string += '        Reward: ' + str(self.model.reward) + '\n'
-        grid_string += '        Discount factor: ' + str(self.model.gamma) + '\n'
-        grid_string += '        Initial learning rate: ' + str(round(self.model.alpha, 3)) + '\n'
-        grid_string += '        Final learning rate: ' + str(round(self.model.final_alpha, 3)) + '\n'
-        grid_string += '        Initial greedy epsilon: ' + str(round(self.model.initial_greedy_epsilon, 3)) + '\n'
-        grid_string += '        Final greedy epsilon: ' + str(round(self.model.final_greedy_epsilon, 3)) + '\n'
+        grid_string += '        Crash mode:                    ' + str(self.model.crash_algorithm) + '\n'
+        grid_string += '        Reward:                        ' + str(self.model.reward) + '\n'
+        grid_string += '        Discount factor:               ' + str(self.model.gamma) + '\n'
+        grid_string += '        Initial learning rate:         ' + str(round(self.model.alpha, 3)) + '\n'
+        grid_string += '        Final learning rate:           ' + str(round(self.model.final_alpha, 3)) + '\n'
+        grid_string += '        Initial greedy epsilon:        ' + str(round(self.model.initial_greedy_epsilon, 3)) + '\n'
+        grid_string += '        Final greedy epsilon:          ' + str(round(self.model.final_greedy_epsilon, 3)) + '\n'
         grid_string += '        %% of state-action pairs not visited: ' + str(round(self.model.final_not_visited, 2)) + '%\n'
 
         # export to txt file for visualization
