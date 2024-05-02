@@ -74,6 +74,8 @@ class Learner:
         print('\nTraining the model...')
         metrics_all_experiements = []
         models = []
+        status_all = []
+        dist_to_goal_all = []
         self.paths = []
         # create a deep copy of the model to save it
         model = copy.deepcopy(self.model)
@@ -84,16 +86,28 @@ class Learner:
         # for each experiment, apply the policy and evaluate the path taken by agent
         for i in range(self.num_exps):
             print(f"    Experiment: {i + 1} of {self.num_exps}")
-            path, path_metrics = model.predict() # apply optimal policy to drive agent in world
+            path, path_metrics, status, dist_to_goal = model.predict() # apply optimal policy to drive agent in world
             # evaluate the model and save the metrics
             metrics_all_experiements.append(path_metrics)
             self.paths.append(path) # save the path
+            status_all.append(status)
+            dist_to_goal_all.append(dist_to_goal)
         # average the metrics for all experiments
         metrics_average, metrics_std = self.get_stats(metrics_all_experiements)
+        # number of successful path that reach goal 
+        success_rate = len([status for status in status_all if status is True]) * 100 / self.num_exps
+        # averge distance to goal
+        # successful_paths = [dist for status, dist in zip(status_all, dist_to_goal_all) if status == True]
+        # dist_to_goal_average = sum(successful_paths) / len(successful_paths)
+        successful_paths = [len(path) for status, path in zip(status_all, self.paths) if status == True]
+        if len(successful_paths) == 0:
+            average_steps = 0
+        else:
+            average_steps = sum(successful_paths) / len(successful_paths)
         # select the best model based on the favorite metric
         self.model = models[0]
         end_time = time.time()
-        print(f"\nMetrics for trained model: {metrics_average} {metrics_std} --- Training time: {end_time - start_time:.2f}s")
+        print(f"\nMetrics for trained model: {metrics_average} {metrics_std} --- Success rate: {success_rate:.2f}% --- Average steps to get to goal: {average_steps:.2f} --- Training time: {end_time - start_time:.2f}s")
         return None
 
     # # Train the model

@@ -59,6 +59,12 @@ class Model:
             self.model.crash_algorithm = 'soft'
         elif int(crash['harsh']) == 1:
             self.model.crash_algorithm = 'harsh'
+        # set mode for transfer learning or not
+        transfer = dict(self.config.items('transfer_learning'))['path']
+        if transfer != '0':
+            cwd = os.getcwd()
+            transfer_path = os.path.join(cwd, 'output', transfer)
+            self.model.transfer_learning = transfer_path
         # set start, goal and forbidden states
         self.model.start_state = self.start_state
         self.model.goal_state = self.goal_state

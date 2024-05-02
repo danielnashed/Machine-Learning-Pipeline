@@ -29,10 +29,12 @@ class Dashboard:
 
     # Visualize the model's performance
     def visualize(self, metrics, logs):
-        # if len(logs['learning_metrics']) != 0:
-        #     learning_curve_figs = self.plot_learning_curve(logs['learning_metrics'])
+        if len(logs['learning_metrics']) != 0:
+            learning_curve_fig = self.plot_learning_curve(logs['learning_metrics'])
+            visits_fig = self.plot_visits_history(logs['learning_metrics'][0]['model'])
         #     for id, learning_curve_fig in enumerate(learning_curve_figs):
-        #         self.export_dashboard(learning_curve_fig, None, id=id+1)
+            self.export_dashboard(learning_curve_fig, None, id=None)
+            self.export_dashboard(visits_fig, None, id='visits')
         if len(logs['validation_metrics']) != 0:
             validation_curve_fig = self.plot_validation_curve(logs['validation_metrics'])
             self.export_dashboard(None, validation_curve_fig, id=None)
@@ -41,40 +43,99 @@ class Dashboard:
     # Plot the learning curve
     def plot_learning_curve(self, learning_metrics):
         print('Plotting the learning curve...')
-        figures = []
-        for k, model in enumerate(learning_metrics):
-            metrics = model['learning_metrics']
-            if len(metrics) == 1:
-                arch_name = 'Feedforward Neural Network'
-                fig, ax = plt.subplots(1, 2, squeeze=False, dpi = 300)
-            else:
-                arch_name = 'Autoencoder + Feedforward Neural Network'
-                fig, ax = plt.subplots(2, 2, squeeze=False, dpi = 300)
-            fig.suptitle('Learning Curves for ' + arch_name + ' - Experiment ' + str(k+1), fontsize=8)
-            for i, arch in enumerate(metrics):
-                for j, metric in enumerate(arch.items()):
-                    metric_name = metric[0]
-                    x = list(metric[1].keys())
-                    if j == 0:
-                        y = list(metric[1].values())
-                        ax[i][j].plot(x, y, color='red')
-                    elif j == 1:
-                        train_metric = [list(metric[1].values())[i][0] for i in range(len(x))]
-                        val_metric = [list(metric[1].values())[i][1] for i in range(len(x))]
-                        ax[i][j].plot(x, train_metric, color='blue', label='Training')
-                        ax[i][j].plot(x, val_metric, color='orange', label='Validation')
-                        ax[i][j].legend(fontsize=6)
-                    else:
-                        continue
-                    ax[i][j].set_title(metric_name + ' over Training Epochs' + ' on ' + self.data.capitalize() + ' Dataset', fontsize=6)
-                    ax[i][j].set_xlabel('Epoch', fontsize=6)
-                    ax[i][j].set_ylabel(metric_name, fontsize=6)
-                    ax[i][j].tick_params(axis='both', which='major', labelsize=6)
-                    ax[i][j].grid(True)
-                    plt.tight_layout()
-            # plt.show()  # Display the figure
-            figures.append(fig)
-        return figures
+        model = learning_metrics[0]['model']
+        Q_metrics = learning_metrics[0]['learning_metrics'][0]
+        visits_metrics = learning_metrics[0]['learning_metrics'][1]
+        Q_forbidden_max = Q_metrics['Q_forbidden_max']
+        Q_track_max = Q_metrics['Q_track_max']
+        Q_forbidden_mean = Q_metrics['Q_forbidden_mean']
+        Q_track_mean = Q_metrics['Q_track_mean']
+        iterations = list(range(len(Q_track_max)))
+        fig, ax = plt.subplots(3, 2, squeeze=False, dpi = 300)
+        fig.suptitle('Learning Curves for ' + model.engine.capitalize(), fontsize=8)
+        ax[0][0].plot(iterations, Q_forbidden_max, color='blue')
+        ax[0][0].set_title('Max of Q Values for Forbidden States Over Iterations', fontsize=6)
+        ax[0][0].set_xlabel('Iterations', fontsize=6)
+        ax[0][0].set_ylabel('Q Forbidden Max', fontsize=6)
+        ax[0][0].tick_params(axis='both', which='major', labelsize=6)
+        ax[0][0].grid(True)
+        ax[1][0].plot(iterations, Q_forbidden_mean, color='blue')
+        ax[1][0].set_title('Mean of Q Values for Forbidden States Over Iterations', fontsize=6)
+        ax[1][0].set_xlabel('Iterations', fontsize=6)
+        ax[1][0].set_ylabel('Q Forbidden Mean', fontsize=6)
+        ax[1][0].tick_params(axis='both', which='major', labelsize=6)
+        ax[1][0].grid(True)
+        ax[0][1].plot(iterations, Q_track_max, color='orange')
+        ax[0][1].set_title('Max of Q Values for Valid States Over Iterations', fontsize=6)
+        ax[0][1].set_xlabel('Iterations', fontsize=6)
+        ax[0][1].set_ylabel('Q Valid Max', fontsize=6)
+        ax[0][1].tick_params(axis='both', which='major', labelsize=6)
+        ax[0][1].grid(True)
+        ax[1][1].plot(iterations, Q_track_mean, color='orange')
+        ax[1][1].set_title('Mean of Q Values for Valid States Over Iterations', fontsize=6)
+        ax[1][1].set_xlabel('Iterations', fontsize=6)
+        ax[1][1].set_ylabel('Q Valid Mean', fontsize=6)
+        ax[1][1].tick_params(axis='both', which='major', labelsize=6)
+        ax[1][1].grid(True)
+        ax[2][0].plot(iterations, visits_metrics, color='orange')
+        ax[2][0].set_title('Percentage of Unvisited States Over Iterations', fontsize=6)
+        ax[2][0].set_xlabel('Iterations', fontsize=6)
+        ax[2][0].set_ylabel('Unvisited States', fontsize=6)
+        ax[2][0].tick_params(axis='both', which='major', labelsize=6)
+        ax[2][0].grid(True)
+        plt.tight_layout()
+        return fig
+        # figures = []
+        # for k, model in enumerate(learning_metrics):
+        #     metrics = model['learning_metrics']
+        #     if len(metrics) == 1:
+        #         arch_name = 'Feedforward Neural Network'
+        #         fig, ax = plt.subplots(1, 2, squeeze=False, dpi = 300)
+        #     else:
+        #         arch_name = 'Autoencoder + Feedforward Neural Network'
+        #         fig, ax = plt.subplots(2, 2, squeeze=False, dpi = 300)
+        #     fig.suptitle('Learning Curves for ' + arch_name + ' - Experiment ' + str(k+1), fontsize=8)
+        #     for i, arch in enumerate(metrics):
+        #         for j, metric in enumerate(arch.items()):
+        #             metric_name = metric[0]
+        #             x = list(metric[1].keys())
+        #             if j == 0:
+        #                 y = list(metric[1].values())
+        #                 ax[i][j].plot(x, y, color='red')
+        #             elif j == 1:
+        #                 train_metric = [list(metric[1].values())[i][0] for i in range(len(x))]
+        #                 val_metric = [list(metric[1].values())[i][1] for i in range(len(x))]
+        #                 ax[i][j].plot(x, train_metric, color='blue', label='Training')
+        #                 ax[i][j].plot(x, val_metric, color='orange', label='Validation')
+        #                 ax[i][j].legend(fontsize=6)
+        #             else:
+        #                 continue
+        #             ax[i][j].set_title(metric_name + ' over Training Epochs' + ' on ' + self.data.capitalize() + ' Dataset', fontsize=6)
+        #             ax[i][j].set_xlabel('Epoch', fontsize=6)
+        #             ax[i][j].set_ylabel(metric_name, fontsize=6)
+        #             ax[i][j].tick_params(axis='both', which='major', labelsize=6)
+        #             ax[i][j].grid(True)
+        #             plt.tight_layout()
+        #     # plt.show()  # Display the figure
+        #     figures.append(fig)
+        # return figures
+
+    def plot_visits_history(self, model):
+        print('Plotting the visits history...')
+        visits = model.visit_history
+        world = model.world
+        heat_map = np.zeros((len(world), len(world[0])))
+        fig, ax = plt.subplots(figsize=(12, 5), dpi = 300, constrained_layout=True)
+        ax.set_title('Visits History', fontsize=10)
+        # create heatmap of counts of visits to each state 
+        visit_count = [sum(state) for state in visits]
+        # convert state index to states in form (x, y)
+        for s in range(len(visit_count)):
+            state = model.index_to_state[s]
+            heat_map[state[1]][state[0]] += visit_count[s]
+        plt.imshow(heat_map, cmap='hot', interpolation='nearest')
+        plt.colorbar()
+        return fig
     
     # Plot weights and biases
     def plot_weights_biases(self, learning_metrics):

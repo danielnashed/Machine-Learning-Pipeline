@@ -58,7 +58,7 @@ class Pipeline:
             directory = os.path.join(root_dir, 'datasets', 'Regression Data Sets', 'Computer Hardware')
         elif dataset == 'forestfires':
             directory = os.path.join(root_dir, 'datasets', 'Regression Data Sets', 'Forest Fires')
-        elif dataset == 'L-track' or dataset == 'O-track' or dataset == 'R-track' or dataset == 'W-track':
+        elif dataset == 'L-track' or dataset == 'O-track' or dataset == 'R-track' or dataset == 'W-track' or dataset == 'test-track':
             directory = os.path.join(root_dir, 'datasets', 'Reinforcement Learning Data Sets', 'Racetracks')
         data_fullpath = os.path.join(directory, dataset) 
 
@@ -104,7 +104,7 @@ class Pipeline:
 def main():
     config = {
         'model': 'reinforcement_learning',       # choose from 'null_model', 'knn', 'condensed_knn', 'decision_tree', 'neural_network', 'reinforcement_learning'
-        'dataset': 'R-track', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'L-track', 'O-track', 'R-track', 'W-track'
+        'dataset': 'test-track', # choose from 'car', 'breast-cancer-wisconsin', 'house-votes-84', 'abalone', 'machine', 'forestfires', 'L-track', 'O-track', 'R-track', 'W-track'
         'mode': 'training',          # choose from 'training', 'inference'
         'cross_validation_splits': None # number of experiments 'k' to run k x 2 cross validation
     }
