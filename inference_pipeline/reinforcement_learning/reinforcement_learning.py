@@ -29,6 +29,7 @@ class ReinforcementLearning:
         self.world = None # world for agent
         self.visit_history = None # history of visits to states
         self.transfer_learning = None # directory for transfer learning
+        self.output = None # path to save functions to 
         self.learning_metrics = [] # logs of model metric as function of training iterations
 
     """
@@ -112,7 +113,10 @@ class ReinforcementLearning:
         Vlast = [-99999999 for _ in range(num_states)] # copy of value function
         R = [[0]*num_actions for _ in range(num_states)] # reward function
         R = self.initialize_rewards(R, S, num_rows, num_cols)
-        Q = [[-9999]*num_actions for _ in range(num_states)] # Q function
+        if self.transfer_learning is None:
+            Q = [[-9999]*num_actions for _ in range(num_states)] # Q function
+        else:
+            Q = self.initialize_via_transfer() # initialize Q function using transfer learning 
         P = [None for _ in range(num_states)] # policy
 
         # # remove invalid states from S
@@ -124,6 +128,16 @@ class ReinforcementLearning:
         # S = valid_S
 
         return (S, V, Vlast, R, Q, P, num_rows, num_cols)
+    
+    def initialize_via_transfer(self):
+        with open(self.transfer_learning, 'r') as f:
+            reader = csv.reader(f)
+            Q = list(reader)
+            # Q = [[None]*len(data[0]) for _ in range(len(data))] # Q function
+            # for s in range(len(data)):
+            #     for a in range(len(data[0])):
+            #         Q[s][a] = data[s][a]
+        return Q
     
     def keep_updating(self, V, Vlast, epsilon):
         array1 = np.array(V)
@@ -264,38 +278,64 @@ class ReinforcementLearning:
     #     #     s = np.random.choice(track_state_indices) # pick any valid state to start
     #     return s, horizon
     
-    def choose_start_state(self, S, visits, t): # another solution: maybe choose states with probability to inverse of their frequency of visit
-        # normalizer_power = 3
-        # peak_time = 0.8 # 0.3
-        # horizon = min(1, 10**(-normalizer_power) * np.exp(t * np.log(10**normalizer_power) / (peak_time * self.training_iterations))) # exponential growth of horizon from 0.001 to 1
-        state_visit_freq = {index: sum(visits[index]) for index, terrain in S.items() if terrain != self.forbidden_state and terrain != self.goal_state}
-        state_visit_prob = {index: 1 / (1 + freq) for index, freq in state_visit_freq.items()}
-        state_visit_normalized_prob = {index: prob / sum(state_visit_prob.values()) for index, prob in state_visit_prob.items()}
-        indices = list(state_visit_normalized_prob.keys())
-        probabilities = list(state_visit_normalized_prob.values())
-        s = random.choices(indices, weights=probabilities, k=1)[0]
-        # s = None
-        # area = 0
-        # if t == 1000:
-        #     debug = ''
-        # # choose a state based on the cumulative distribution
-        # random_num = np.random.uniform(0, 1)
-        # # create a cumulative distribution of state visit probabilities
-        # for index, prob in state_visit_normalized_prob.items():
-        #     area += prob
-        #     if random_num <= area:
-        #         s = index
-        #         break
-            # state_visit_normalized_prob[index] = area
-        # choose a state based on the cumulative distribution
-        # random_num = np.random.uniform(0, 1)
-        # s = None
-        # for index, prob in state_visit_normalized_prob.items():
-        #     if random_num <= prob:
-        #         s = index
-        #         break
-        horizon = 1
-        return s, horizon
+    # def choose_start_state(self, S, visits, t): # another solution: maybe choose states with probability to inverse of their frequency of visit
+    #     # normalizer_power = 3
+    #     # peak_time = 0.8 # 0.3
+    #     # horizon = min(1, 10**(-normalizer_power) * np.exp(t * np.log(10**normalizer_power) / (peak_time * self.training_iterations))) # exponential growth of horizon from 0.001 to 1
+    #     # state_visit_freq = {index: sum(visits[index]) for index in self.track_state_indices}
+    #     # state_visit_prob = {index: 1 / (1 + freq) for index, freq in state_visit_freq.items()}
+    #     # state_visit_normalized_prob = {index: prob / sum(state_visit_prob.values()) for index, prob in state_visit_prob.items()}
+    #     indices = np.array(self.track_state_indices)
+    #     freqs = np.sum(visits[self.track_state_indices], axis=1)
+    #     probs = 1 / (1 + freqs) # probability inversely proportional to frequency of visit
+    #     normalized_probs = probs / sum(probs) # normalize probabilities so all sum up to 1
+    #     s = random.choices(list(indices), weights=list(normalized_probs), k=1)[0]
+    #     # s = None
+    #     # area = 0
+    #     # if t == 1000:
+    #     #     debug = ''
+    #     # # choose a state based on the cumulative distribution
+    #     # random_num = np.random.uniform(0, 1)
+    #     # # create a cumulative distribution of state visit probabilities
+    #     # for index, prob in state_visit_normalized_prob.items():
+    #     #     area += prob
+    #     #     if random_num <= area:
+    #     #         s = index
+    #     #         break
+    #         # state_visit_normalized_prob[index] = area
+    #     # choose a state based on the cumulative distribution
+    #     # random_num = np.random.uniform(0, 1)
+    #     # s = None
+    #     # for index, prob in state_visit_normalized_prob.items():
+    #     #     if random_num <= prob:
+    #     #         s = index
+    #     #         break
+    #     horizon = 1
+    #     return s, horizon
+
+    def reorder_states(self, S):
+        track_state_indices = np.array([index for index, terrain in S.items() if terrain != self.forbidden_state and terrain != self.goal_state])
+        track_states = np.array([self.index_to_state[index][:2] for index in track_state_indices]) # extract states as (x, y)
+        goal_state_indices = [index for index, terrain in self.S.items() if terrain == self.goal_state] # extract all goal indices
+        goal_states = np.array(list(set([self.index_to_state[index][:2] for index in goal_state_indices]))) # extract states as (x, y)
+        goal_states_sorted = goal_states[np.lexsort((goal_states[:, 1], goal_states[:, 0]))] # sort all states by x then by y
+        goal_state =  goal_states_sorted[len(goal_states_sorted) // 2] # pick middle goal state 
+        track_states_dists = np.linalg.norm(track_states - goal_state, axis=1) # calculate euclidian distance from all track states to goal state
+        track_state_indices_sorted = track_state_indices[np.argsort(track_states_dists)] # sort track states by decreasing distance to goal state
+        self.track_state_indices = track_state_indices_sorted
+        return None
+
+    def choose_start_state(self, visits, t):
+        initial_horizon = 10 # start with 10 states at start near terminal state
+        peak_time = 0.8 # time when horizon covers entire space of indices
+        growth_factor = np.log(len(self.track_state_indices) / initial_horizon) / peak_time # control growth rate
+        horizon = min(len(self.track_state_indices) ,initial_horizon * np.exp(t * growth_factor / self.training_iterations)) # exponential growth of horizon from 10 states to all track states
+        indices = self.track_state_indices[:int(horizon)] # expanding horizon of indices
+        freqs = np.sum(visits[indices], axis=1)
+        probs = 1 / (1 + freqs) # probability inversely proportional to frequency of visit
+        normalized_probs = probs / sum(probs) # normalize probabilities so all sum up to 1
+        s = random.choices(list(indices), weights=list(normalized_probs), k=1)[0] # choose a state according to its probability
+        return s, horizon/len(self.track_state_indices)
     
     def epsilon_greedy_choice(self, Q, s, t):
         # epsilon = 0.25 * (1 / (t + 1)) # epsilon decreases over time (exploration-exploitation tradeoff)
@@ -303,7 +343,8 @@ class ReinforcementLearning:
         epsilon = 1 - (t /self.training_iterations) # linear decay from 1.0 to 0.1 up to 90% of iterations
         if t > 0.9 * self.training_iterations:
             epsilon = 0.1
-        # epsilon = 0.1
+        if t == 0:
+            self.initial_greedy_epsilon = epsilon
         values = list(Q[s])
         random_num = np.random.uniform(0, 1)
         # exploration choice has probability epsilon of choosing a random action
@@ -410,7 +451,7 @@ class ReinforcementLearning:
         # File path to save the CSV file
         csv_file_path = 'Q.csv'
         # directory to save file 
-        csv_file_path = os.path.join(self.transfer_learning, 'Q.csv')
+        csv_file_path = os.path.join(self.output, 'Q.csv')
         # Open the CSV file in write mode
         with open(csv_file_path, 'w', newline='') as csv_file:
             # Create a CSV writer object
@@ -522,6 +563,7 @@ class ReinforcementLearning:
 
     def sarsa(self, world):
         S, _, _, R, Q, _, _, _ = self.initialize_vars(world)
+        self.reorder_states(S) # reorder track states in order of distance from goal states
         Q_history = {'Q_forbidden_max': [], 'Q_track_max': [], 'Q_forbidden_mean': [], 'Q_track_mean': []}
         visit_history = []
         visits = np.zeros((len(Q), len(Q[0])))
@@ -529,8 +571,7 @@ class ReinforcementLearning:
         for t in range(self.training_iterations + 1):
             t_inner = 0
             start_time = time.time()
-            s, horizon = self.choose_start_state(S, visits, t) # initialize state randomly close to terminal state
-            # print(f'start state terrain: {S[s]}')
+            s, horizon = self.choose_start_state(visits, t) # initialize state randomly close to terminal state
             a, greedy_epsilon = self.epsilon_greedy_choice(Q, s, t) # choose action using epsilon-greedy policy
             while S[s] != self.goal_state:
                 action = self.actions[a] # action is a tuple (ddx, ddy)
@@ -554,6 +595,9 @@ class ReinforcementLearning:
         outer_end_time = time.time()
         self.learning_metrics = (Q_history, visit_history)
         self.visit_history = visits
+        self.final_alpha = alpha 
+        self.final_greedy_epsilon = greedy_epsilon
+        self.final_not_visited = not_visited
         P = self.extract_policy(Q) # extract policy from Q function
         self.export_Q(Q) # export Q for debugging
         print('\nPolicy learning complete...')
@@ -714,6 +758,7 @@ class ReinforcementLearning:
         current_state_index = start_state_index
         new_state_index = start_state_index
         count = 0 # count of self loops
+        collisions = 0 # count of collisions
         status = True
         terrain = ''
         while terrain != self.goal_state:
@@ -730,7 +775,10 @@ class ReinforcementLearning:
             if random_num < self.transition['fail']:
                 action = (0, 0) # no acceleration happens
             new_state = self.apply_kinematics(current_state, action)
-            new_state = self.handle_collision(current_state, new_state)
+            new_state_after_collision = self.handle_collision(current_state, new_state)
+            if new_state_after_collision != new_state:
+                collisions += 1
+            new_state = new_state_after_collision
             # path.append((current_state, action, new_state))
             if self.inside_boundary(new_state):
                 new_state_index = self.state_to_index[new_state]
@@ -747,7 +795,7 @@ class ReinforcementLearning:
             path.append((current_state, action, new_state))
             terrain = self.S[new_state_index]
         dist_to_goal = np.linalg.norm(np.array(new_state[:2]) - np.array(goal_state[:2]))
-        return path, status, dist_to_goal
+        return path, status, dist_to_goal, collisions
 
     """
     'predict' method is responsible for making predictions using the trained model. The method first
@@ -762,6 +810,6 @@ class ReinforcementLearning:
     """
     def predict(self):
         start_state_index = self.initialize_agent() # place agent at a start state
-        path, status, dist_to_goal = self.create_path(start_state_index) # create path from optimal policy
+        path, status, dist_to_goal, collisions = self.create_path(start_state_index) # create path from optimal policy
         path_metrics = {'length': len(path), 'cost': 0, 'training_iters': self.training_iterations} # calculate path metrics
-        return path, path_metrics, status, dist_to_goal
+        return path, path_metrics, status, dist_to_goal, collisions
