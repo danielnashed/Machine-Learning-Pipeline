@@ -126,13 +126,19 @@ class Dashboard:
         world = model.world
         heat_map = np.zeros((len(world), len(world[0])))
         fig, ax = plt.subplots(figsize=(12, 5), dpi = 300, constrained_layout=True)
-        ax.set_title('Visits History', fontsize=10)
         # create heatmap of counts of visits to each state 
         visit_count = [sum(state) for state in visits]
         # convert state index to states in form (x, y)
         for s in range(len(visit_count)):
             state = model.index_to_state[s]
             heat_map[state[1]][state[0]] += visit_count[s]
+        # extract track states from heat map
+        track_heat_map = [heat_map[i][j] for i in range(len(world)) for j in range(len(world[i])) if world[i][j] != model.forbidden_state]
+        # calculate stats of heat map 
+        mean = np.mean(track_heat_map)
+        std = np.std(track_heat_map)
+        # plot stats in title 
+        ax.set_title('Visits Frequency\nMean: ' + str(round(mean, 3)) + ' Std: ' + str(round(std, 3)), fontsize=14)
         plt.imshow(heat_map, cmap='hot', interpolation='nearest')
         plt.colorbar()
         return fig

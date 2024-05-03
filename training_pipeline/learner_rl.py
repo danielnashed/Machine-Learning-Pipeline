@@ -87,7 +87,7 @@ class Learner:
         models.append(model) # save the model
         # for each experiment, apply the policy and evaluate the path taken by agent
         for i in range(self.num_exps):
-            print(f"    Experiment: {i + 1} of {self.num_exps}")
+            # print(f"    Experiment: {i + 1} of {self.num_exps}")
             path, path_metrics, status, dist_to_goal, collisions = model.predict() # apply optimal policy to drive agent in world
             # evaluate the model and save the metrics
             metrics_all_experiements.append(path_metrics)
