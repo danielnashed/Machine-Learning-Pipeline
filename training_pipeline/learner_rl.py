@@ -128,7 +128,7 @@ class Learner:
         # select the best model based on the favorite metric
         self.model = models[0]
         end_time = time.time()
-        print(f"\nMetrics for trained model: {metrics_average} {metrics_std} --- Success rate: {success_rate:.2f}% --- Average steps to get to goal: {average_steps:.2f} --- Average collisions: {average_collisions:.2f} --- Training time: {end_time - start_time:.2f}s")
+        print(f"\nMetrics for trained model: Success rate: {success_rate:.2f}% --- Average steps to get to goal: {average_steps:.2f} --- Average collisions: {average_collisions:.2f} --- Training time: {end_time - start_time:.2f}s")
         return None
 
     # # Train the model

@@ -100,11 +100,14 @@ class PathVisualizer:
         grid_string += '        Crash mode:                    ' + str(self.model.crash_algorithm) + '\n'
         grid_string += '        Reward:                        ' + str(self.model.reward) + '\n'
         grid_string += '        Discount factor:               ' + str(self.model.gamma) + '\n'
-        grid_string += '        Initial learning rate:         ' + str(round(self.model.alpha, 3)) + '\n'
-        grid_string += '        Final learning rate:           ' + str(round(self.model.final_alpha, 3)) + '\n'
-        grid_string += '        Initial greedy epsilon:        ' + str(round(self.model.initial_greedy_epsilon, 3)) + '\n'
-        grid_string += '        Final greedy epsilon:          ' + str(round(self.model.final_greedy_epsilon, 3)) + '\n'
-        grid_string += '        %% of state-action pairs not visited: ' + str(round(self.model.final_not_visited, 2)) + '%\n'
+        if self.model.engine == 'value_iteration':
+            grid_string += '        Convergence epsilon:           ' + str(round(self.model.convergence_epsilon, 3)) + '\n'
+        else:
+            grid_string += '        Initial learning rate:         ' + str(round(self.model.alpha, 3)) + '\n'
+            grid_string += '        Final learning rate:           ' + str(round(self.model.final_alpha, 3)) + '\n'
+            grid_string += '        Initial greedy epsilon:        ' + str(round(self.model.initial_greedy_epsilon, 3)) + '\n'
+            grid_string += '        Final greedy epsilon:          ' + str(round(self.model.final_greedy_epsilon, 3)) + '\n'
+            grid_string += '        %% of state-action pairs not visited: ' + str(round(self.model.final_not_visited, 2)) + '%\n'
         return grid_string
 
     def visualize_path(self, path): 

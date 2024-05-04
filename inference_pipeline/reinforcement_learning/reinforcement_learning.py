@@ -6,7 +6,7 @@ import time
 import random
 import csv
 import os
-from inference_pipeline.reinforcement_learning import state as State
+from inference_pipeline.reinforcement_learning import value_iteration as __value_iteration__
 from inference_pipeline.reinforcement_learning import bresenham_line as BresenhamLineAlgorithm
 
 class ReinforcementLearning:
@@ -26,10 +26,10 @@ class ReinforcementLearning:
         self.reward = None # reward for goal state
         self.alpha = None # learning rate
         self.gamma = None # discount factor
+        self.convergence_epsilon = None # epsilon for convergence for value iteration
         self.world = None # world for agent
         self.visit_history = None # history of visits to states
         self.transfer_learning = None # directory for transfer learning
-        self.lambda_val = 0.9 # lambda value for eligibility traces
         self.output = None # path to save functions to 
         self.learning_metrics = [] # logs of model metric as function of training iterations
 
@@ -80,7 +80,7 @@ class ReinforcementLearning:
         new_y = y + new_y_vel # new position_y = current position_y + new velocity_y
         return (new_x, new_y, new_x_vel, new_y_vel)
 
-    def initialize_rewards(self, R, S, num_rows, num_cols):
+    def initialize_rewards(self, R, S):
         for s in range(len(R)): # s is a state index in S
             current_state = self.index_to_state[s] # convert state index to state (x, y, vx, vy)
             terrain = S[s]  # get terrain of the current state
@@ -113,7 +113,7 @@ class ReinforcementLearning:
         V = [-9999 for _ in range(num_states)] # value function
         Vlast = [-99999999 for _ in range(num_states)] # copy of value function
         R = [[0]*num_actions for _ in range(num_states)] # reward function
-        R = self.initialize_rewards(R, S, num_rows, num_cols)
+        R = self.initialize_rewards(R, S)
         if self.transfer_learning is None:
             Q = [[-9]*num_actions for _ in range(num_states)] # Q function # -9999
         else:
@@ -123,83 +123,57 @@ class ReinforcementLearning:
                 Q[s] = [1000]*num_actions
             elif S[s] == self.forbidden_state:
                 Q[s] = [-9999]*num_actions
-        E = [[0]*num_actions for _ in range(num_states)] # eligibility function
         P = [None for _ in range(num_states)] # policy
-
-        # # remove invalid states from S
-        # valid_S = copy.deepcopy(S)
-        # for s in S.keys():
-        #     is_valid = self.valid(s)
-        #     if not is_valid:
-        #         valid_S.pop(s)
-        # S = valid_S
-
-        return (S, V, Vlast, R, Q, E, P, num_rows, num_cols)
+        visits = np.zeros((len(Q), len(Q[0]))) # visit history
+        return (S, V, Vlast, R, Q, P, visits)
     
     def initialize_via_transfer(self):
         with open(self.transfer_learning, 'r') as f:
             reader = csv.reader(f)
             Q = list(reader)
-            # Q = [[None]*len(data[0]) for _ in range(len(data))] # Q function
-            # for s in range(len(data)):
-            #     for a in range(len(data[0])):
-            #         Q[s][a] = data[s][a]
         return Q
     
-    def keep_updating(self, V, Vlast, epsilon):
-        array1 = np.array(V)
-        array2 = np.array(Vlast)
-        self.learning_metrics.append(np.linalg.norm(array1 - array2)) # log the difference between V and Vlast
-        return np.any(np.abs(array1 - array2) > epsilon)
+    # def keep_updating(self, V, Vlast, epsilon):
+    #     array1 = np.array(V)
+    #     array2 = np.array(Vlast)
+    #     self.learning_metrics.append(np.linalg.norm(array1 - array2)) # log the difference between V and Vlast
+    #     return np.any(np.abs(array1 - array2) > epsilon)
 
-    def successors(self, current_state, desired_action, S, num_rows, num_cols):
-        children = []
-        # [1] apply desired action
-        probability = self.transition['success'] 
-        new_state = self.apply_kinematics(current_state, desired_action)
-        if self.inside_boundary(new_state):
-            new_state_index = self.state_to_index[new_state]
-            terrain = S[new_state_index] # get terrain of new state
-            # if the action I take makes me bump into a wall, then reset the state to the current state and reset velocity to 0
-            if terrain == self.forbidden_state: # apply crash algorithm
-                new_state = (current_state[0], current_state[1], 0, 0)
-                new_state_index = self.state_to_index[new_state]
-            children.append((new_state_index, probability))
-         # [2] apply undesired action
-        probability = self.transition['fail'] 
-        undesired_action = (0, 0) # no acceleration happens
-        new_state = self.apply_kinematics(current_state, undesired_action)
-        if self.inside_boundary(new_state):
-            new_state_index = self.state_to_index[new_state]
-            terrain = S[new_state_index] # get terrain of new state
-            # if the action I take makes me bump into a wall, then reset the state to the current state and reset velocity to 0
-            if terrain == self.forbidden_state: # apply crash algorithm
-                new_state = (current_state[0], current_state[1], 0, 0)
-                new_state_index = self.state_to_index[new_state]
-            children.append((new_state_index, probability))
-        return children
+    # def successors(self, current_state, desired_action, S, num_rows, num_cols):
+    #     children = []
+    #     # [1] apply desired action
+    #     probability = self.transition['success'] 
+    #     new_state = self.apply_kinematics(current_state, desired_action)
+    #     if self.inside_boundary(new_state):
+    #         new_state_index = self.state_to_index[new_state]
+    #         terrain = S[new_state_index] # get terrain of new state
+    #         # if the action I take makes me bump into a wall, then reset the state to the current state and reset velocity to 0
+    #         if terrain == self.forbidden_state: # apply crash algorithm
+    #             new_state = (current_state[0], current_state[1], 0, 0)
+    #             new_state_index = self.state_to_index[new_state]
+    #         children.append((new_state_index, probability))
+    #      # [2] apply undesired action
+    #     probability = self.transition['fail'] 
+    #     undesired_action = (0, 0) # no acceleration happens
+    #     new_state = self.apply_kinematics(current_state, undesired_action)
+    #     if self.inside_boundary(new_state):
+    #         new_state_index = self.state_to_index[new_state]
+    #         terrain = S[new_state_index] # get terrain of new state
+    #         # if the action I take makes me bump into a wall, then reset the state to the current state and reset velocity to 0
+    #         if terrain == self.forbidden_state: # apply crash algorithm
+    #             new_state = (current_state[0], current_state[1], 0, 0)
+    #             new_state_index = self.state_to_index[new_state]
+    #         children.append((new_state_index, probability))
+    #     return children
     
-    def stochastic_future_reward(self, s, a, actions, S, Vlast, num_rows, num_cols):
-        current_state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
-        desired_action = actions[a] # action is a tuple (ddx, ddy)
-        new_states = self.successors(current_state, desired_action, S, num_rows, num_cols)
-        future_reward = 0
-        for new_state in new_states:
-            future_reward += new_state[1] * Vlast[new_state[0]] # probability * future reward
-        return future_reward
-    
-    # def get_best_action(self, Q, s):
-    #     lst = Q[s]
-    #     # if there are no actions to take in state s, then return None
-    #     # if all([x is None for x in lst]):
-    #     #     return None
-    #     # if there are actions to take in state s, then return the index of the best action
-    #     # lst = [x if x is not None else -9999 for x in lst] # replace None with -999 to use max function
-    #     # if all actions are equally of equal value, choose an action randomly 
-    #     if all([x == -9999 for x in lst]):
-    #         return np.random.choice(range(len(lst)))
-    #     action_index = lst.index(max(lst)) # index of best action in Q[s]
-    #     return action_index
+    # def stochastic_future_reward(self, s, a, actions, S, Vlast, num_rows, num_cols):
+    #     current_state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
+    #     desired_action = actions[a] # action is a tuple (ddx, ddy)
+    #     new_states = self.successors(current_state, desired_action, S, num_rows, num_cols)
+    #     future_reward = 0
+    #     for new_state in new_states:
+    #         future_reward += new_state[1] * Vlast[new_state[0]] # probability * future reward
+    #     return future_reward
 
     def get_best_action(self, Q, s):
         lst = np.array(Q[s])
@@ -209,125 +183,6 @@ class ReinforcementLearning:
         action_index = np.argmax(lst) # index of best action in Q[s]
         return action_index
     
-    def valid(self, s):
-        # check if state is on border of boundary 
-        state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
-        x, y = state[0:2]
-        on_border = False
-        # [1] check if state is on border of boundary
-        if x == 0 or x == len(self.world[0]) - 1 or y == 0 or y == len(self.world) - 1:
-            on_border = True
-        # [2] check if velocity leads to a state outside the boundary
-        if on_border:
-            x_vel, y_vel = state[2:]
-            if x == 0 and x_vel <= -2:
-                return False
-            if x == len(self.world[0]) - 1 and x_vel >= 2:
-                return False
-            if y == 0 and y_vel <= -2:
-                return False
-            if y == len(self.world) - 1 and y_vel >= 2:
-                return False
-        return True
-    
-    # def choose_start_state(self, S, t): # another solution: maybe choose states with probability to inverse of their frequency of visit
-    #     # normalizer_power = 3
-    #     # peak_time = 0.8 # 0.3
-    #     # horizon = min(1, 10**(-normalizer_power) * np.exp(t * np.log(10**normalizer_power) / (peak_time * self.training_iterations))) # exponential growth of horizon from 0.001 to 1
-    #     if t < 500:
-    #         horizon = 0
-    #     else:
-    #         horizon = 1
-    #     num_states = len(S)
-    #     goal_state_indices = [index for index, terrain in S.items() if terrain == self.goal_state]
-    #     min_goal_state_index = min(goal_state_indices)
-    #     max_goal_state_index = max(goal_state_indices)
-    #     lower_limit = min_goal_state_index - (horizon * num_states) # maybe try including 0.5 factor
-    #     upper_limit = max_goal_state_index + (horizon * num_states)
-    #     lower_limit = int(max(0, lower_limit))
-    #     upper_limit = int(min(num_states - 1, upper_limit))
-    #     # lower_limit = 0
-    #     # upper_limit = len(S) - 1
-    #     s = np.random.choice(range(lower_limit, upper_limit + 1))
-    #     # s = np.random.choice(range(min_goal_state_index, max_goal_state_index + 1))
-    #     # kep history of visits to a state and over time, increase probability of visiting states that have not been visited
-    #     return s, horizon
-
-    # def choose_start_state(self, S, t): # another solution: maybe choose states with probability to inverse of their frequency of visit
-    #     # normalizer_power = 3
-    #     # peak_time = 0.8 # 0.3
-    #     # horizon = min(1, 10**(-normalizer_power) * np.exp(t * np.log(10**normalizer_power) / (peak_time * self.training_iterations))) # exponential growth of horizon from 0.001 to 1
-    #     track_state_indices = [(index, terrain) for index, terrain in S.items() if terrain != self.forbidden_state]
-    #     goal_state_indices = [index for index, terrain in track_state_indices if terrain == self.goal_state]
-    #     min_goal_state_index = min(goal_state_indices)
-    #     max_goal_state_index = max(goal_state_indices)
-    #     if t < 200:
-    #         horizon = 0
-    #         lower_limit = min_goal_state_index
-    #         upper_limit = max_goal_state_index
-    #         s = np.random.choice(range(lower_limit, upper_limit + 1)) # pick a valid state near goal state to start
-    #     else:
-    #         horizon = 1
-    #         track_state_indices = [index for index, terrain in track_state_indices]
-    #         s = np.random.choice(track_state_indices) # pick any valid state to start
-    #     return s, horizon
-
-    # def choose_start_state(self, S, t): # another solution: maybe choose states with probability to inverse of their frequency of visit
-    #     # normalizer_power = 3
-    #     # peak_time = 0.8 # 0.3
-    #     # horizon = min(1, 10**(-normalizer_power) * np.exp(t * np.log(10**normalizer_power) / (peak_time * self.training_iterations))) # exponential growth of horizon from 0.001 to 1
-    #     track_state_indices = [index for index, terrain in S.items() if terrain != self.forbidden_state and terrain != self.goal_state]
-    #     s = np.random.choice(track_state_indices) # pick any valid state to start
-    #     horizon = 1
-    #     # goal_state_indices = [index for index, terrain in track_state_indices if terrain == self.goal_state]
-    #     # min_goal_state_index = min(goal_state_indices)
-    #     # max_goal_state_index = max(goal_state_indices)
-    #     # if t < 200:
-    #     #     horizon = 0
-    #     #     lower_limit = min_goal_state_index
-    #     #     upper_limit = max_goal_state_index
-    #     #     s = np.random.choice(range(lower_limit, upper_limit + 1)) # pick a valid state near goal state to start
-    #     # else:
-    #     #     horizon = 1
-    #     #     track_state_indices = [index for index, terrain in track_state_indices]
-    #     #     s = np.random.choice(track_state_indices) # pick any valid state to start
-    #     return s, horizon
-    
-    # def choose_start_state(self, S, visits, t): # another solution: maybe choose states with probability to inverse of their frequency of visit
-    #     # normalizer_power = 3
-    #     # peak_time = 0.8 # 0.3
-    #     # horizon = min(1, 10**(-normalizer_power) * np.exp(t * np.log(10**normalizer_power) / (peak_time * self.training_iterations))) # exponential growth of horizon from 0.001 to 1
-    #     # state_visit_freq = {index: sum(visits[index]) for index in self.track_state_indices}
-    #     # state_visit_prob = {index: 1 / (1 + freq) for index, freq in state_visit_freq.items()}
-    #     # state_visit_normalized_prob = {index: prob / sum(state_visit_prob.values()) for index, prob in state_visit_prob.items()}
-    #     indices = np.array(self.track_state_indices)
-    #     freqs = np.sum(visits[self.track_state_indices], axis=1)
-    #     probs = 1 / (1 + freqs) # probability inversely proportional to frequency of visit
-    #     normalized_probs = probs / sum(probs) # normalize probabilities so all sum up to 1
-    #     s = random.choices(list(indices), weights=list(normalized_probs), k=1)[0]
-    #     # s = None
-    #     # area = 0
-    #     # if t == 1000:
-    #     #     debug = ''
-    #     # # choose a state based on the cumulative distribution
-    #     # random_num = np.random.uniform(0, 1)
-    #     # # create a cumulative distribution of state visit probabilities
-    #     # for index, prob in state_visit_normalized_prob.items():
-    #     #     area += prob
-    #     #     if random_num <= area:
-    #     #         s = index
-    #     #         break
-    #         # state_visit_normalized_prob[index] = area
-    #     # choose a state based on the cumulative distribution
-    #     # random_num = np.random.uniform(0, 1)
-    #     # s = None
-    #     # for index, prob in state_visit_normalized_prob.items():
-    #     #     if random_num <= prob:
-    #     #         s = index
-    #     #         break
-    #     horizon = 1
-    #     return s, horizon
-
     def reorder_states(self, S):
         track_state_indices = np.array([index for index, terrain in S.items() if terrain != self.forbidden_state and terrain != self.goal_state])
         track_states = np.array([self.index_to_state[index][:2] for index in track_state_indices]) # extract states as (x, y)
@@ -389,7 +244,6 @@ class ReinforcementLearning:
         epsilon = 1 - (0.5* t /self.training_iterations) # linear decay from 1.0 to 0.8 up to 80% of iterations #0.2, 0.5, 0.8
         if t > 0.8 * self.training_iterations:
             epsilon = 0.1 # 0.2
-        # epsilon = 0.1
         if t == 0:
             self.initial_greedy_epsilon = epsilon
         values = list(Q[s])
@@ -402,63 +256,12 @@ class ReinforcementLearning:
             probs = 1 / (1 + (10 * freqs)) # probability inversely proportional to frequency of visit
             normalized_probs = probs / sum(probs) # normalize probabilities so all sum up to 1
             a = random.choices(list(range(len(values))), weights=list(normalized_probs), k=1)[0] # choose an action according to its probability
-            # return np.random.choice(range(len(values))), epsilon
         # exploitation choice (greedy) has probability 1 - epsilon of choosing the best action
         else:
             flag = 'exploit'
             a = self.get_best_action(Q, s)
-            # return self.get_best_action(Q, s), epsilon
         # print(flag)
         return a, epsilon, flag
-    
-    # def epsilon_greedy_choice(self, Q, s, visits, t):
-    #     # epsilon = 0.25 * (1 / (t + 1)) # epsilon decreases over time (exploration-exploitation tradeoff)
-    #     # epsilon = 1.0 * np.exp(-t / (0.8 * self.training_iterations)) # exponential decay of epsilon, #0.5
-    #     epsilon = 1 - (t /self.training_iterations) # linear decay from 1.0 to 0.1 up to 90% of iterations
-    #     if t > 0.9 * self.training_iterations:
-    #         epsilon = 0.1
-    #     if t == 0:
-    #         self.initial_greedy_epsilon = epsilon
-    #     values = list(Q[s])
-    #     random_num = np.random.uniform(0, 1)
-    #     # exploration choice has probability epsilon of choosing a suboptimal action
-    #     if random_num < epsilon:
-    #         # when exploring, dont just pick an action randomly, but pick one that has not been visited frequently in the past in current state
-    #         freqs = visits[s]
-    #         probs = 1 / (1 + (10 * freqs)) # probability inversely proportional to frequency of visit
-    #         normalized_probs = probs / sum(probs) # normalize probabilities so all sum up to 1
-    #         a = random.choices(list(range(len(values))), weights=list(normalized_probs), k=1)[0] # choose an action according to its probability
-    #         # return np.random.choice(range(len(values))), epsilon
-    #     # exploitation choice (greedy) has probability 1 - epsilon of choosing the best action
-    #     else:
-    #         a = self.get_best_action(Q, s)
-    #         # return self.get_best_action(Q, s), epsilon
-    #     return a, epsilon
-        
-    def find_nearby_state(self, x, y, offset=1):
-        unit_moves = [-1, 0, 1]
-        moves1 = list(itertools.product(unit_moves, unit_moves))
-        if offset == 1:
-            moves = moves1
-        else:
-            offset_moves = list(range(-offset, offset + 1))
-            moves2 = list(itertools.product(offset_moves, offset_moves))
-            moves = list(set(moves2) - set(moves1))
-        neighbors = []
-        for move in moves:
-            new_x = x + move[0]
-            new_y = y + move[1]
-            if self.inside_boundary((new_x, new_y, 0, 0)):
-                if self.world[new_y][new_x] != self.forbidden_state:
-                    neighbors.append((new_x, new_y))
-        if neighbors != []:
-                nearby_state = random.choice(neighbors)
-
-                return nearby_state # return a random nearby neighbor
-        else:
-            offset += 1
-            nearby_state = self.find_nearby_state(x, y, offset) # recursively find a nearby state
-        return nearby_state
     
     def pretty_grid(self, grid):
         # convert the grid to emojis for visualization
@@ -522,13 +325,7 @@ class ReinforcementLearning:
 
     def learning_rate(self, t):
         alpha = self.alpha * np.exp(-t / (0.5 * self.training_iterations)) # exponential decay of learning rate
-        #alpha = self.alpha
         return alpha
-
-    # def learning_rate(self, freq, t):
-    #     # alpha = self.alpha * np.exp(-t / (0.5 * self.training_iterations)) # exponential decay of learning rate
-    #     alpha = self.alpha * np.exp(-0.1 * freq) # exponential decay of learning rate
-    #     return alpha
     
     def extract_policy(self, Q):
         P = [None for _ in range(len(Q))]
@@ -537,25 +334,20 @@ class ReinforcementLearning:
         return P
     
     def export_Q(self, Q):
-        # Q_track = [[s] + [self.index_to_state[s]] + row for s, row in enumerate(Q) if self.S[s] != self.forbidden_state]
-        # File path to save the CSV file
-        csv_file_path = 'Q.csv'
-        # directory to save file 
-        csv_file_path = os.path.join(self.output, 'Q.csv')
-        # Open the CSV file in write mode
+        csv_file_path = 'Q.csv' # file path to save CSV file
+        csv_file_path = os.path.join(self.output, 'Q.csv') # directory to save file 
+        # open the CSV file in write mode
         with open(csv_file_path, 'w', newline='') as csv_file:
-            # Create a CSV writer object
-            csv_writer = csv.writer(csv_file)
-            # Write each row (list) to the CSV file
+            csv_writer = csv.writer(csv_file) # create CSV writer object
             for row in Q:
-                csv_writer.writerow(row)
+                csv_writer.writerow(row) # write each row (list) to the CSV file
         return None
     
     def print_stats(self, world, S, Q, Q_history, visits, visit_history):
-        Q_forbidden = [Q[s] for s, terrain in S.items() if terrain == self.forbidden_state]
+        Q_forbidden = [Q[s] for s, terrain in S.items() if terrain == self.forbidden_state] # values for forbidden states
         Q_forbidden_max = np.max(Q_forbidden)
         Q_forbidden_mean = np.mean(Q_forbidden)
-        Q_track = [Q[s] for s, terrain in S.items() if terrain != self.forbidden_state]
+        Q_track = [Q[s] for s, terrain in S.items() if terrain != self.forbidden_state] # values for track states
         Q_track_max = np.max(Q_track)
         Q_track_mean = np.mean(Q_track)
         Q_history['Q_forbidden_max'].append(Q_forbidden_max)
@@ -566,60 +358,11 @@ class ReinforcementLearning:
         for s in range(len(visits)):
             state = self.index_to_state[s]
             if world[state[1]][state[0]] != self.forbidden_state:
-                Q_track_visits[state] = np.array(visits[s])
-
-        # Q_track_visits = {}
-        # for s in range(len(visits)):
-        #     state = self.index_to_state[s]
-        #     if world[state[1]][state[0]] != self.forbidden_state:
-        #         pos = state[:2]
-        #         # Q_track_visits[pos] = np.array(copy.deepcopy(visits[s])) # state position regardless of velocity
-        #         if pos not in Q_track_visits:
-        #             Q_track_visits[pos] = np.array(visits[s])
-        #         else:
-        #             Q_track_visits[pos] += np.array(visits[s])
-
-
-
-
-                # Q_track_visits.append(visits[s])
-        # look at state-action pairs not visited
-        # Q_track_visits = np.array(Q_track_visits)
-        # not_visited = np.sum(Q_track_visits == 0) * 100 / (len(Q_track_visits) * len(Q_track_visits[0]))
-        # look at states not visited regardless of velocity
-        # Q_track_visits = np.array(Q_track_visits.values())
-        Q_track_visits = np.stack(list(Q_track_visits.values()))
+                Q_track_visits[state] = np.array(visits[s]) # store visit count for all track states
+        Q_track_visits = np.stack(list(Q_track_visits.values())) # array manipulation
         not_visited = np.sum(Q_track_visits == 0) * 100 / (len(Q_track_visits) * len(Q_track_visits[0])) # find state-action pairs not visited
         visit_history.append(not_visited)
         return Q_history, visit_history, not_visited,  Q_forbidden_mean, Q_track_mean
-
-    def value_iteration(self, world):
-        S, V, Vlast, R, Q, P, num_rows, num_cols = self.initialize_vars(world)
-        # epsilon = 1e-3
-        # epsilon = 0.1
-        epsilon = 0.1
-        t = 1
-        while (self.keep_updating(V, Vlast, epsilon) and t < self.training_iterations):
-            start_time = time.time()
-            Vlast = copy.deepcopy(V)  
-            for s, terrain in S.items(): # key: state_index, value: terrain
-                # if terrain == self.forbidden_state:
-                #     continue # do nothing if you are on a forbidden state since you cant be in one in first place
-                for a, _ in enumerate(self.actions): # a is action index
-                    # if R[s][a] is None:
-                    #     Q[s][a] = None
-                    #     continue
-                    Q[s][a] = R[s][a] + self.gamma * self.stochastic_future_reward(s, a, self.actions, S, Vlast, num_rows, num_cols) 
-                P[s] = self.get_best_action(Q, s) # return index of best action to take in state s
-                # if P[s] is None:
-                #     continue
-                V[s] = Q[s][P[s]] # return value of best action to take in state s
-            end_time = time.time()
-            print(f'        Iteration {t}, delta V: {self.learning_metrics[-1]}, {end_time - start_time:.2f} s')
-            t += 1
-        self.training_iterations = t
-        print('Policy learning complete...')
-        return P
     
     def q_learning(self, world):
         S, _, _, R, Q, _, _, _ = self.initialize_vars(world)
@@ -649,68 +392,9 @@ class ReinforcementLearning:
         P = self.extract_policy(Q) # extract policy from Q function
         print('Policy learning complete...')
         return P
-    
-
-    # def sarsa(self, world):
-    #     S, _, _, R, Q, E, _, _, _ = self.initialize_vars(world)
-    #     self.reorder_states(S) # reorder track states in order of distance from goal states
-    #     Q_history = {'Q_forbidden_max': [], 'Q_track_max': [], 'Q_forbidden_mean': [], 'Q_track_mean': []}
-    #     visit_history = []
-    #     visits = np.zeros((len(Q), len(Q[0])))
-    #     outer_start_time = time.time()
-    #     for t in range(self.training_iterations + 1):
-    #         t_inner = 0
-    #         escape = False
-    #         start_time = time.time()
-    #         s, horizon = self.choose_start_state(visits, t) # initialize state randomly close to terminal state
-    #         # print(f'episode: {t} --- initial state: {self.index_to_state[s]}')
-    #         a, greedy_epsilon = self.epsilon_greedy_choice(Q, s, visits, t) # choose action using epsilon-greedy policy
-    #         while S[s] != self.goal_state:
-    #             t_inner += 1
-    #             action = self.actions[a] # action is a tuple (ddx, ddy)
-    #             state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
-    #             random_num = np.random.uniform(0, 1)
-    #             if random_num < self.transition['fail']:
-    #                 action = (0, 0) # no acceleration happens
-    #             new_state = self.apply_kinematics(state, action) # apply action to get new state
-    #             new_state = self.handle_collision(state, new_state) # handle collision with walls
-    #             new_s = self.state_to_index[new_state] # convert new state to state index
-    #             new_a, greedy_epsilon = self.epsilon_greedy_choice(Q, new_s, visits, t) # choose action using epsilon-greedy policy
-    #             alpha = self.learning_rate(t)
-    #             if t_inner >= 50:
-    #                 reward = -9
-    #                 escape = True
-    #             else:
-    #                 reward = R[s][a]
-    #             temporal_error = (reward + (self.gamma * Q[new_s][new_a]) - Q[s][a])
-    #             E[s][a] += 1 # increment eligibility trace
-    #             for s in range(len(Q)):
-    #                 for a in range(len(Q[0])):
-    #                     Q[s][a] += alpha * temporal_error * E[s][a]
-    #                     E[s][a] *= self.gamma * self.lambda_val
-    #             # Q[s][a] += alpha * (reward + (self.gamma * Q[new_s][new_a]) - Q[s][a]) # update Q function 
-    #             visits[s][a] += 1 # update visit count
-    #             s = new_s # update state
-    #             a = new_a # update action
-    #             if escape is True:
-    #                 break
-    #         end_time = time.time()
-    #         Q_history, visit_history, not_visited,  Q_forbidden_mean, Q_track_mean = self.print_stats(world, S, Q, Q_history, visits, visit_history)
-    #         print(f'        Outer Iteration {t}, horizon: {horizon:.3f}, greedy-epsilon: {greedy_epsilon:.3f}, learning rate: {alpha:.3f}, not_visited: {not_visited:.3f}%, Q_track_mean: {Q_track_mean:.3f}, inner iterations: {t_inner:0{4}d}, {end_time - start_time:.2f}s')
-    #     outer_end_time = time.time()
-    #     self.learning_metrics = (Q_history, visit_history)
-    #     self.visit_history = visits
-    #     self.final_alpha = alpha 
-    #     self.final_greedy_epsilon = greedy_epsilon
-    #     self.final_not_visited = not_visited
-    #     P = self.extract_policy(Q) # extract policy from Q function
-    #     self.export_Q(Q) # export Q for debugging
-    #     print('\nPolicy learning complete...')
-    #     print(f'Training iterations: {t} --> {outer_end_time-outer_start_time:.3f}s --- {not_visited:.3f}% of position state-action pairs were not visited')
-    #     return P
 
     def sarsa(self, world):
-        S, _, _, R, Q, _, _, _, _ = self.initialize_vars(world)
+        S, _, _, R, Q, _, _, _ = self.initialize_vars(world)
         self.reorder_states(S) # reorder track states in order of distance from goal states
         Q_history = {'Q_forbidden_max': [], 'Q_track_max': [], 'Q_forbidden_mean': [], 'Q_track_mean': []}
         visit_history = []
@@ -720,7 +404,6 @@ class ReinforcementLearning:
             t_inner = 0
             escape = False
             s, horizon = self.choose_start_state(visits, t) # initialize state randomly close to terminal state
-            # print(f'episode: {t} --- initial state: {self.index_to_state[s]}')
             a, greedy_epsilon, flag = self.epsilon_greedy_choice(Q, s, visits, t) # choose action using epsilon-greedy policy
             while S[s] != self.goal_state:
                 t_inner += 1
@@ -734,7 +417,6 @@ class ReinforcementLearning:
                 new_s = self.state_to_index[new_state] # convert new state to state index
                 new_a, greedy_epsilon, flag = self.epsilon_greedy_choice(Q, new_s, visits, t) # choose action using epsilon-greedy policy
                 alpha = self.learning_rate(t)
-                # alpha = self.learning_rate(visits[s][a], t)
                 if t_inner >= 200:
                     reward = -999
                     escape = True
@@ -759,129 +441,6 @@ class ReinforcementLearning:
         print('\nPolicy learning complete...')
         print(f'Training iterations: {t} --> {outer_end_time-outer_start_time:.3f}s --- {not_visited:.3f}% of position state-action pairs were not visited')
         return P
-    
-
-    # def sarsa(self, world):
-    #     S, _, _, R, Q, _, _, _, _ = self.initialize_vars(world)
-    #     # A =  [[self.alpha]*len(Q[0]) for _ in range(len(Q))]
-    #     self.reorder_states(S) # reorder track states in order of distance from goal states
-    #     Q_history = {'Q_forbidden_max': [], 'Q_track_max': [], 'Q_forbidden_mean': [], 'Q_track_mean': []}
-    #     visit_history = []
-    #     visits = np.zeros((len(Q), len(Q[0])))
-    #     outer_start_time = time.time()
-    #     for t in range(self.training_iterations + 1):
-    #         t_inner = 0
-    #         escape = False
-    #         start_time = time.time()
-    #         s, horizon = self.choose_start_state(visits, t) # initialize state randomly close to terminal state
-    #         # print(f'episode: {t} --- initial state: {self.index_to_state[s]}')
-    #         a, greedy_epsilon = self.epsilon_greedy_choice(Q, s, visits, t) # choose action using epsilon-greedy policy
-    #         while S[s] != self.goal_state:
-    #             t_inner += 1
-    #             action = self.actions[a] # action is a tuple (ddx, ddy)
-    #             state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
-    #             random_num = np.random.uniform(0, 1)
-    #             if random_num < self.transition['fail']:
-    #                 action = (0, 0) # no acceleration happens
-    #             new_state = self.apply_kinematics(state, action) # apply action to get new state
-    #             new_state = self.handle_collision(state, new_state) # handle collision with walls
-    #             new_s = self.state_to_index[new_state] # convert new state to state index
-    #             new_a, greedy_epsilon = self.epsilon_greedy_choice(Q, new_s, visits, t) # choose action using epsilon-greedy policy
-    #             alpha = self.learning_rate(t)
-    #             # alpha = self.learning_rate(visits[s][a], t)
-    #             if t_inner >= 200:
-    #                 reward = -999
-    #                 escape = True
-    #             else:
-    #                 reward = R[s][a]
-    #             predict = Q[s][a]
-    #             target = reward + (self.gamma * Q[new_s][new_a])
-    #             Q[s][a] += alpha * (target - predict) # update Q function 
-    #             # Q[s][a] += alpha * (reward + (self.gamma * Q[new_s][new_a]) - Q[s][a]) # update Q function 
-    #             visits[s][a] += 1 # update visit count
-    #             s = new_s # update state
-    #             a = new_a # update action
-    #             if escape is True:
-    #                 break
-    #         end_time = time.time()
-    #         Q_history, visit_history, not_visited,  Q_forbidden_mean, Q_track_mean = self.print_stats(world, S, Q, Q_history, visits, visit_history)
-    #         print(f'        Outer Iteration {t}, horizon: {horizon:.3f}, greedy-epsilon: {greedy_epsilon:.3f}, learning rate: {alpha:.3f}, not_visited: {not_visited:.3f}%, Q_track_mean: {Q_track_mean:.3f}, inner iterations: {t_inner:0{4}d}, {end_time - start_time:.2f}s')
-    #     outer_end_time = time.time()
-    #     self.learning_metrics = (Q_history, visit_history)
-    #     self.visit_history = visits
-    #     self.final_alpha = alpha 
-    #     self.final_greedy_epsilon = greedy_epsilon
-    #     self.final_not_visited = not_visited
-    #     P = self.extract_policy(Q) # extract policy from Q function
-    #     self.export_Q(Q) # export Q for debugging
-    #     print('\nPolicy learning complete...')
-    #     print(f'Training iterations: {t} --> {outer_end_time-outer_start_time:.3f}s --- {not_visited:.3f}% of position state-action pairs were not visited')
-    #     return P
-
-
-    # def sarsa(self, world):
-    #     S, _, _, R, Q, _, _, _ = self.initialize_vars(world)
-    #     Q_history = {'Q_forbidden_max': [], 'Q_track_max': [], 'Q_forbidden_mean': [], 'Q_track_mean': []}
-    #     visit_history = []
-    #     visits = np.zeros((len(Q), len(Q[0])))
-    #     num_Q_values = len(Q) * len(Q[0])
-    #     for t in range(self.training_iterations + 1):
-    #         t_inner = 0
-    #         start_time = time.time()
-    #         s, horizon = self.choose_start_state(S, t) # initialize state randomly close to terminal state
-    #         a = self.epsilon_greedy_choice(Q, s, t) # choose action using epsilon-greedy policy
-    #         while S[s] != self.goal_state:
-    #             action = self.actions[a] # action is a tuple (ddx, ddy)
-    #             state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
-    #             random_num = np.random.uniform(0, 1)
-    #             if random_num < self.transition['fail']:
-    #                 action = (0, 0) # no acceleration happens
-    #             t_inner += 1
-    #             # if t_inner % 1 == 0:
-    #             #     print(f'            Inner Iteration {t_inner} --> random state: {state}, terrain: {S[s]}')
-    #             new_state = self.apply_kinematics(state, action) # apply action to get new state
-    #             new_state = self.handle_collision(state, new_state) # handle collision with walls
-    #             # if not self.inside_boundary(new_state):
-    #             #     Q[s][a] = -99999 # do i ever enter this line ???
-    #             #     s, horizon = self.choose_start_state(S, t) # initialize state randomly close to terminal state
-    #             #     a = self.epsilon_greedy_choice(Q, s, t) # choose action using epsilon-greedy policy
-    #             #     continue
-    #             new_s = self.state_to_index[new_state] # convert new state to state index
-    #             new_a = self.epsilon_greedy_choice(Q, new_s, t) # choose action using epsilon-greedy policy
-    #             Q[s][a] += self.alpha * (R[s][a] + (self.gamma * Q[new_s][new_a]) - Q[s][a]) # update Q function 
-    #             visits[s][a] += 1 # update visit count
-    #             s = new_s # update state
-    #             a = new_a # update action
-    #         # print(f'                Inner Iteration {t_inner+1} --> random state: {self.index_to_state[s]}, terrain: {S[s]}')
-    #         end_time = time.time()
-    #         Q_history, visit_history, not_visited,  Q_forbidden_mean, Q_track_mean = self.print_stats(world, S, Q, Q_history, visits, visit_history)
-    #         # Q_forbidden = [Q[s] for s, terrain in S.items() if terrain == self.forbidden_state]
-    #         # Q_forbidden_max = np.max(Q_forbidden)
-    #         # Q_forbidden_mean = np.mean(Q_forbidden)
-    #         # Q_track = [Q[s] for s, terrain in S.items() if terrain != self.forbidden_state]
-    #         # Q_track_max = np.max(Q_track)
-    #         # Q_track_mean = np.mean(Q_track)
-    #         # Q_history['Q_forbidden_max'].append(Q_forbidden_max)
-    #         # Q_history['Q_forbidden_mean'].append(Q_forbidden_mean)
-    #         # Q_history['Q_track_max'].append(Q_track_max)
-    #         # Q_history['Q_track_mean'].append(Q_track_mean)
-    #         # Q_track_visits = []
-    #         # for s in range(len(visits)):
-    #         #     state = self.index_to_state[s]
-    #         #     if world[state[1]][state[0]] != self.forbidden_state:
-    #         #         Q_track_visits.append(visits[s])
-    #         # Q_track_visits = np.array(Q_track_visits)
-    #         # not_visited = np.sum(Q_track_visits == 0) * 100 / (len(Q_track_visits) * len(Q_track_visits[0]))
-    #         # visit_history.append(not_visited)
-    #         print(f'        Outer Iteration {t}, horizon: {horizon:.3f}, not_visited: {not_visited:.3f}%, Q_forbidden_mean: {Q_forbidden_mean:.3f}, Q_track_mean: {Q_track_mean:.3f}, inner iterations: {t_inner+1:0{4}d}, {end_time - start_time:.2f}s')
-    #     self.learning_metrics = (Q_history, visit_history)
-    #     self.visit_history = visits
-    #     # num_Q_values = len(Q) * len(Q[0])
-    #     # not_visited = np.sum(visits == 0) * 100 / num_Q_values
-    #     P = self.extract_policy(Q) # extract policy from Q function
-    #     print('Policy learning complete...')
-    #     print(f'        Training iterations: {t} --> {not_visited:.3f}% of Q values were not visited')
-    #     return P
 
     """
     'fit' method is responsible for training the model using the training data. The method first checks if
@@ -905,14 +464,15 @@ class ReinforcementLearning:
         print(f'        Training RL agent using {self.engine}...')
         self.world = world
         if self.engine == 'value_iteration':
-            policy = self.value_iteration(world)
+            engine = __value_iteration__.ValueIteration(self)
+            # policy = self.value_iteration(world)
         elif self.engine == 'q_learning':
             policy = self.q_learning(world) # learn optimal policy
         elif self.engine == 'sarsa':
             policy = self.sarsa(world) # learn optimal policy
+        policy = self.simulator(engine, world)
         self.function = policy
         return self.learning_metrics
-        # return None
     
     def initialize_agent(self):
         # get index of all start states in world 
@@ -920,48 +480,6 @@ class ReinforcementLearning:
         # randomly select a start state
         start_state_index = np.random.choice(start_state_indices)
         return start_state_index
-    
-    # def create_path(self, start_state_index):
-    #     policy = self.function
-    #     path = []
-    #     current_state_index = start_state_index
-    #     current_state = self.index_to_state[current_state_index]
-    #     action_index = policy[current_state_index]
-    #     if action_index is None:
-    #         print('         Policy contains a None action. Failed to reach goal state.')
-    #         return path
-    #     action = self.actions[action_index]
-    #     new_state = self.apply_kinematics(current_state, action)
-    #     # path.append((current_state, action, new_state))
-    #     if self.inside_boundary(new_state):
-    #         new_state_index = self.state_to_index[new_state]
-    #     else:
-    #         print('         Policy generates path outside boundary. Failed to reach goal state.')
-    #         return path
-    #     path.append((current_state, action, new_state))
-    #     terrain = self.S[new_state_index]
-    #     while terrain != self.goal_state:
-    #         prev_state_index = current_state_index # pointer to prev state to detect self loop
-    #         current_state_index = new_state_index
-    #         current_state = self.index_to_state[current_state_index]
-    #         action_index = policy[current_state_index]
-    #         if action_index is None:
-    #             print('         Policy contains a None action. Failed to reach goal state.')
-    #             return path
-    #         action = self.actions[action_index]
-    #         new_state = self.apply_kinematics(current_state, action)
-    #         # path.append((current_state, action, new_state))
-    #         if self.inside_boundary(new_state):
-    #             new_state_index = self.state_to_index[new_state]
-    #             if new_state_index == prev_state_index:
-    #                 print('         Policy generates self loop. Failed to reach goal state.')
-    #                 return path
-    #         else:
-    #             print('         Policy generates path outside boundary. Failed to reach goal state.')
-    #             return path
-    #         path.append((current_state, action, new_state))
-    #         terrain = self.S[new_state_index]
-    #     return path
 
     def create_path(self, start_state_index):
         policy = self.function
@@ -1027,3 +545,35 @@ class ReinforcementLearning:
         path, status, dist_to_goal, collisions = self.create_path(start_state_index) # create path from optimal policy
         path_metrics = {'length': len(path), 'cost': 0, 'training_iters': self.training_iterations} # calculate path metrics
         return path, path_metrics, status, dist_to_goal, collisions
+    
+
+
+
+
+    def simulator(self, engine, world):
+        S, V, Vlast, R, Q, P, visits = self.initialize_vars(world)
+        engine.state_to_index = self.state_to_index
+        engine.index_to_state = self.index_to_state
+        self.reorder_states(S) # reorder track states in order of distance from goal states
+        outer_start_time = time.time()
+        if self.engine == 'value_iteration':
+            P, learning_metrics = engine.learn(S, V, Vlast, R, Q, P)
+            iterations = len(learning_metrics)
+            not_visited = 0
+            self.learning_metrics = (learning_metrics) # delta V over iterations
+        else:
+            value_history = {'Q_forbidden_max': [], 'Q_track_max': [], 'Q_forbidden_mean': [], 'Q_track_mean': []}
+            visit_history = []
+            P, learning_metrics = engine.learn(S, V, Vlast, R, Q, P)
+            pass
+        outer_end_time = time.time()
+        # self.learning_metrics = (value_history, visit_history)
+        # self.visit_history = visits
+        # self.final_alpha = alpha 
+        # self.final_greedy_epsilon = greedy_epsilon
+        # self.final_not_visited = not_visited
+        # P = self.extract_policy(Q) # extract policy from Q function
+        # self.export_Q(Q) # export Q for debugging
+        print('\nPolicy learning complete...')
+        print(f'Training iterations: {iterations} --> {outer_end_time-outer_start_time:.3f}s --- {not_visited:.3f}% of position state-action pairs were not visited')
+        return P

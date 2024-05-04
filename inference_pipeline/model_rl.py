@@ -81,5 +81,6 @@ class Model:
         self.model.reward = int(model_parameters['reward']) # reward for goal state
         self.model.alpha = float(model_parameters['alpha']) # learning rate
         self.model.gamma = float(model_parameters['gamma']) # discount factor
+        self.model.convergence_epsilon = float(model_parameters['convergence_epsilon']) # epsilon for convergence for value iteration
         print('Setting model to ' + self.model.__class__.__name__ + '...')
         return (self.model, self.config)
