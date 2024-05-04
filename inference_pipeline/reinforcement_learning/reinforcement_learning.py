@@ -29,6 +29,7 @@ class ReinforcementLearning:
         self.world = None # world for agent
         self.visit_history = None # history of visits to states
         self.transfer_learning = None # directory for transfer learning
+        self.lambda_val = 0.9 # lambda value for eligibility traces
         self.output = None # path to save functions to 
         self.learning_metrics = [] # logs of model metric as function of training iterations
 
@@ -114,9 +115,15 @@ class ReinforcementLearning:
         R = [[0]*num_actions for _ in range(num_states)] # reward function
         R = self.initialize_rewards(R, S, num_rows, num_cols)
         if self.transfer_learning is None:
-            Q = [[-9999]*num_actions for _ in range(num_states)] # Q function
+            Q = [[-9]*num_actions for _ in range(num_states)] # Q function # -9999
         else:
             Q = self.initialize_via_transfer() # initialize Q function using transfer learning 
+        for s in range(len(Q)):
+            if S[s] == self.goal_state:
+                Q[s] = [1000]*num_actions
+            elif S[s] == self.forbidden_state:
+                Q[s] = [-9999]*num_actions
+        E = [[0]*num_actions for _ in range(num_states)] # eligibility function
         P = [None for _ in range(num_states)] # policy
 
         # # remove invalid states from S
@@ -127,7 +134,7 @@ class ReinforcementLearning:
         #         valid_S.pop(s)
         # S = valid_S
 
-        return (S, V, Vlast, R, Q, P, num_rows, num_cols)
+        return (S, V, Vlast, R, Q, E, P, num_rows, num_cols)
     
     def initialize_via_transfer(self):
         with open(self.transfer_learning, 'r') as f:
@@ -181,17 +188,25 @@ class ReinforcementLearning:
             future_reward += new_state[1] * Vlast[new_state[0]] # probability * future reward
         return future_reward
     
+    # def get_best_action(self, Q, s):
+    #     lst = Q[s]
+    #     # if there are no actions to take in state s, then return None
+    #     # if all([x is None for x in lst]):
+    #     #     return None
+    #     # if there are actions to take in state s, then return the index of the best action
+    #     # lst = [x if x is not None else -9999 for x in lst] # replace None with -999 to use max function
+    #     # if all actions are equally of equal value, choose an action randomly 
+    #     if all([x == -9999 for x in lst]):
+    #         return np.random.choice(range(len(lst)))
+    #     action_index = lst.index(max(lst)) # index of best action in Q[s]
+    #     return action_index
+
     def get_best_action(self, Q, s):
-        lst = Q[s]
-        # if there are no actions to take in state s, then return None
-        # if all([x is None for x in lst]):
-        #     return None
-        # if there are actions to take in state s, then return the index of the best action
-        lst = [x if x is not None else -9999 for x in lst] # replace None with -999 to use max function
-        # if all actions are equally of equal value, choose an action randomly 
-        if all([x == -9999 for x in lst]):
+        lst = np.array(Q[s])
+        # if all actions are of equal value, choose an action randomly 
+        if len(np.unique(lst)) == 1:
             return np.random.choice(range(len(lst)))
-        action_index = lst.index(max(lst)) # index of best action in Q[s]
+        action_index = np.argmax(lst) # index of best action in Q[s]
         return action_index
     
     def valid(self, s):
@@ -325,34 +340,34 @@ class ReinforcementLearning:
         self.track_state_indices = track_state_indices_sorted
         return None
 
+    # # expanding horizon
     # def choose_start_state(self, visits, t):
     #     initial_horizon = 2000 # start with 10 states at start near terminal state #10, 1500
-    #     receptive_field = 4000 # max number of states to look at for choosing a state
-    #     # peak_time = 0.8 # time when horizon covers entire space of indices
-    #     # growth_factor = np.log(len(self.track_state_indices) / initial_horizon) / peak_time # control growth rate
-    #     # horizon = min(len(self.track_state_indices) ,initial_horizon * np.exp(t * growth_factor / self.training_iterations)) # exponential growth of horizon from 10 states to all track states
-    #     velocity = len(self.track_state_indices) / self.training_iterations # velocity of horizon frontier
-    #     horizon = initial_horizon + (velocity * t)  # linear shift in horizon frontier 
-    #     start_index = int(max(0, horizon - receptive_field))
-    #     end_index = int(min(horizon, len(self.track_state_indices)))
-    #     # indices = self.track_state_indices[:int(horizon)] # expanding horizon of indices
-    #     indices = self.track_state_indices[start_index:end_index] # expanding horizon of indices
+    #     peak_time = 0.8 # time when horizon covers entire space of indices
+    #     growth_factor = np.log(len(self.track_state_indices) / initial_horizon) / peak_time # control growth rate
+    #     horizon = min(len(self.track_state_indices) ,initial_horizon * np.exp(t * growth_factor / self.training_iterations)) # exponential growth of horizon from 10 states to all track states
+    #     indices = self.track_state_indices[:int(horizon)] # expanding horizon of indices
     #     freqs = np.sum(visits[indices], axis=1)
     #     probs = 1 / (1 + (10 * freqs)) # probability inversely proportional to frequency of visit
     #     normalized_probs = probs / sum(probs) # normalize probabilities so all sum up to 1
     #     s = random.choices(list(indices), weights=list(normalized_probs), k=1)[0] # choose a state according to its probability
     #     return s, horizon/len(self.track_state_indices)
 
+    # sliding receptive field: this works better than expanding horizon
     def choose_start_state(self, visits, t):
-        peak_time = 0.8 # time when horizon covers entire space of indices
+        peak_time_1 = 0.0 # time when horizon covers entire space of indices, 0.8
+        peak_time_2 = 0.0
+        receptive_field = 4000 # max number of states to look at for choosing a state
         # limited receptive field that moves from terminal states to start states
-        if t < peak_time * self.training_iterations:
+        if t < peak_time_1 * self.training_iterations:
             initial_frontier_pos = 2000 # start with 10 states at start near terminal state #10, 1500
-            receptive_field = 4000 # max number of states to look at for choosing a state
-            velocity = len(self.track_state_indices) / (peak_time * self.training_iterations) # velocity of horizon frontier
+            velocity = len(self.track_state_indices) / (peak_time_1 * self.training_iterations) # velocity of horizon frontier
             frontier_pos = initial_frontier_pos + (velocity * t)  # linear shift in horizon frontier 
             frontier_pos = int(min(frontier_pos, len(self.track_state_indices))) # clip horizon to maximum number of states
             tail_pos = int(max(0, frontier_pos - receptive_field))
+        elif t < peak_time_2 * self.training_iterations:
+            tail_pos = len(self.track_state_indices) - receptive_field
+            frontier_pos = len(self.track_state_indices)
         # after peak time, horizon expands to cover all states
         else:
             tail_pos = 0
@@ -364,18 +379,24 @@ class ReinforcementLearning:
         s = random.choices(list(indices), weights=list(normalized_probs), k=1)[0] # choose a state according to its probability
         return s, frontier_pos/len(self.track_state_indices)
     
+
     def epsilon_greedy_choice(self, Q, s, visits, t):
         # epsilon = 0.25 * (1 / (t + 1)) # epsilon decreases over time (exploration-exploitation tradeoff)
         # epsilon = 1.0 * np.exp(-t / (0.8 * self.training_iterations)) # exponential decay of epsilon, #0.5
-        epsilon = 1 - (t /self.training_iterations) # linear decay from 1.0 to 0.1 up to 90% of iterations
-        if t > 0.9 * self.training_iterations:
-            epsilon = 0.1
+        # freq = np.sum(visits[s])
+        # epsilon = 0.9 * np.exp(- 0.1 * freq)
+        flag = None
+        epsilon = 1 - (0.5* t /self.training_iterations) # linear decay from 1.0 to 0.8 up to 80% of iterations #0.2, 0.5, 0.8
+        if t > 0.8 * self.training_iterations:
+            epsilon = 0.1 # 0.2
+        # epsilon = 0.1
         if t == 0:
             self.initial_greedy_epsilon = epsilon
         values = list(Q[s])
         random_num = np.random.uniform(0, 1)
         # exploration choice has probability epsilon of choosing a suboptimal action
         if random_num < epsilon:
+            flag = 'explore'
             # when exploring, dont just pick an action randomly, but pick one that has not been visited frequently in the past in current state
             freqs = visits[s]
             probs = 1 / (1 + (10 * freqs)) # probability inversely proportional to frequency of visit
@@ -384,9 +405,35 @@ class ReinforcementLearning:
             # return np.random.choice(range(len(values))), epsilon
         # exploitation choice (greedy) has probability 1 - epsilon of choosing the best action
         else:
+            flag = 'exploit'
             a = self.get_best_action(Q, s)
             # return self.get_best_action(Q, s), epsilon
-        return a, epsilon
+        # print(flag)
+        return a, epsilon, flag
+    
+    # def epsilon_greedy_choice(self, Q, s, visits, t):
+    #     # epsilon = 0.25 * (1 / (t + 1)) # epsilon decreases over time (exploration-exploitation tradeoff)
+    #     # epsilon = 1.0 * np.exp(-t / (0.8 * self.training_iterations)) # exponential decay of epsilon, #0.5
+    #     epsilon = 1 - (t /self.training_iterations) # linear decay from 1.0 to 0.1 up to 90% of iterations
+    #     if t > 0.9 * self.training_iterations:
+    #         epsilon = 0.1
+    #     if t == 0:
+    #         self.initial_greedy_epsilon = epsilon
+    #     values = list(Q[s])
+    #     random_num = np.random.uniform(0, 1)
+    #     # exploration choice has probability epsilon of choosing a suboptimal action
+    #     if random_num < epsilon:
+    #         # when exploring, dont just pick an action randomly, but pick one that has not been visited frequently in the past in current state
+    #         freqs = visits[s]
+    #         probs = 1 / (1 + (10 * freqs)) # probability inversely proportional to frequency of visit
+    #         normalized_probs = probs / sum(probs) # normalize probabilities so all sum up to 1
+    #         a = random.choices(list(range(len(values))), weights=list(normalized_probs), k=1)[0] # choose an action according to its probability
+    #         # return np.random.choice(range(len(values))), epsilon
+    #     # exploitation choice (greedy) has probability 1 - epsilon of choosing the best action
+    #     else:
+    #         a = self.get_best_action(Q, s)
+    #         # return self.get_best_action(Q, s), epsilon
+    #     return a, epsilon
         
     def find_nearby_state(self, x, y, offset=1):
         unit_moves = [-1, 0, 1]
@@ -451,28 +498,37 @@ class ReinforcementLearning:
         end = new_state[0:2] # end position as (x, y)
         bresenham_line = BresenhamLineAlgorithm.BresenhamLine(start, end) # rasterize line between start and end
         points = bresenham_line.draw_line() # get all grid points on line
+        prev_point = start
         # self.export_line(points, start, end) # for debugging
         for point in points:
             x, y = point
+            current_point = point # pointer reference
             if not self.inside_boundary((x, y, 0, 0)): # check if point is outside boundary
                 continue # you will get to a point that is a wall before you get to a point that is outside the boundary, so it is safe to skip
             if self.world[y][x] == self.forbidden_state:
                 # soft version --> reduce velocity to 0 and place agent near crash site
-                ### FIX: iterate through points starting from start and stop when you reach a forbidden state. Then assign the state right before that to be the nearby state.
                 if self.crash_algorithm == 'soft':
-                    nearby_state = self.find_nearby_state(x, y) # find a nearby state to place agent
-                    return (nearby_state[0], nearby_state[1], 0, 0) # reset velocity to 0
+                    # nearby_state = self.find_nearby_state(x, y) # find a nearby state to place agent
+                    # return (nearby_state[0], nearby_state[1], 0, 0) # reset velocity to 0
+                    return (prev_point[0], prev_point[1], 0, 0) # last point on trajectory that is not a wall
                 # hard version --> reset agent to start state with velocity 0
                 elif self.crash_algorithm == 'harsh':
                     s = self.initialize_agent() # pick a start state index at random
                     start_state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
                     return (start_state[0], start_state[1], 0, 0) # reset velocity to 0
+            prev_point = current_point
         return new_state
     
 
     def learning_rate(self, t):
         alpha = self.alpha * np.exp(-t / (0.5 * self.training_iterations)) # exponential decay of learning rate
+        #alpha = self.alpha
         return alpha
+
+    # def learning_rate(self, freq, t):
+    #     # alpha = self.alpha * np.exp(-t / (0.5 * self.training_iterations)) # exponential decay of learning rate
+    #     alpha = self.alpha * np.exp(-0.1 * freq) # exponential decay of learning rate
+    #     return alpha
     
     def extract_policy(self, Q):
         P = [None for _ in range(len(Q))]
@@ -595,8 +651,66 @@ class ReinforcementLearning:
         return P
     
 
+    # def sarsa(self, world):
+    #     S, _, _, R, Q, E, _, _, _ = self.initialize_vars(world)
+    #     self.reorder_states(S) # reorder track states in order of distance from goal states
+    #     Q_history = {'Q_forbidden_max': [], 'Q_track_max': [], 'Q_forbidden_mean': [], 'Q_track_mean': []}
+    #     visit_history = []
+    #     visits = np.zeros((len(Q), len(Q[0])))
+    #     outer_start_time = time.time()
+    #     for t in range(self.training_iterations + 1):
+    #         t_inner = 0
+    #         escape = False
+    #         start_time = time.time()
+    #         s, horizon = self.choose_start_state(visits, t) # initialize state randomly close to terminal state
+    #         # print(f'episode: {t} --- initial state: {self.index_to_state[s]}')
+    #         a, greedy_epsilon = self.epsilon_greedy_choice(Q, s, visits, t) # choose action using epsilon-greedy policy
+    #         while S[s] != self.goal_state:
+    #             t_inner += 1
+    #             action = self.actions[a] # action is a tuple (ddx, ddy)
+    #             state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
+    #             random_num = np.random.uniform(0, 1)
+    #             if random_num < self.transition['fail']:
+    #                 action = (0, 0) # no acceleration happens
+    #             new_state = self.apply_kinematics(state, action) # apply action to get new state
+    #             new_state = self.handle_collision(state, new_state) # handle collision with walls
+    #             new_s = self.state_to_index[new_state] # convert new state to state index
+    #             new_a, greedy_epsilon = self.epsilon_greedy_choice(Q, new_s, visits, t) # choose action using epsilon-greedy policy
+    #             alpha = self.learning_rate(t)
+    #             if t_inner >= 50:
+    #                 reward = -9
+    #                 escape = True
+    #             else:
+    #                 reward = R[s][a]
+    #             temporal_error = (reward + (self.gamma * Q[new_s][new_a]) - Q[s][a])
+    #             E[s][a] += 1 # increment eligibility trace
+    #             for s in range(len(Q)):
+    #                 for a in range(len(Q[0])):
+    #                     Q[s][a] += alpha * temporal_error * E[s][a]
+    #                     E[s][a] *= self.gamma * self.lambda_val
+    #             # Q[s][a] += alpha * (reward + (self.gamma * Q[new_s][new_a]) - Q[s][a]) # update Q function 
+    #             visits[s][a] += 1 # update visit count
+    #             s = new_s # update state
+    #             a = new_a # update action
+    #             if escape is True:
+    #                 break
+    #         end_time = time.time()
+    #         Q_history, visit_history, not_visited,  Q_forbidden_mean, Q_track_mean = self.print_stats(world, S, Q, Q_history, visits, visit_history)
+    #         print(f'        Outer Iteration {t}, horizon: {horizon:.3f}, greedy-epsilon: {greedy_epsilon:.3f}, learning rate: {alpha:.3f}, not_visited: {not_visited:.3f}%, Q_track_mean: {Q_track_mean:.3f}, inner iterations: {t_inner:0{4}d}, {end_time - start_time:.2f}s')
+    #     outer_end_time = time.time()
+    #     self.learning_metrics = (Q_history, visit_history)
+    #     self.visit_history = visits
+    #     self.final_alpha = alpha 
+    #     self.final_greedy_epsilon = greedy_epsilon
+    #     self.final_not_visited = not_visited
+    #     P = self.extract_policy(Q) # extract policy from Q function
+    #     self.export_Q(Q) # export Q for debugging
+    #     print('\nPolicy learning complete...')
+    #     print(f'Training iterations: {t} --> {outer_end_time-outer_start_time:.3f}s --- {not_visited:.3f}% of position state-action pairs were not visited')
+    #     return P
+
     def sarsa(self, world):
-        S, _, _, R, Q, _, _, _ = self.initialize_vars(world)
+        S, _, _, R, Q, _, _, _, _ = self.initialize_vars(world)
         self.reorder_states(S) # reorder track states in order of distance from goal states
         Q_history = {'Q_forbidden_max': [], 'Q_track_max': [], 'Q_forbidden_mean': [], 'Q_track_mean': []}
         visit_history = []
@@ -605,10 +719,9 @@ class ReinforcementLearning:
         for t in range(self.training_iterations + 1):
             t_inner = 0
             escape = False
-            start_time = time.time()
             s, horizon = self.choose_start_state(visits, t) # initialize state randomly close to terminal state
             # print(f'episode: {t} --- initial state: {self.index_to_state[s]}')
-            a, greedy_epsilon = self.epsilon_greedy_choice(Q, s, visits, t) # choose action using epsilon-greedy policy
+            a, greedy_epsilon, flag = self.epsilon_greedy_choice(Q, s, visits, t) # choose action using epsilon-greedy policy
             while S[s] != self.goal_state:
                 t_inner += 1
                 action = self.actions[a] # action is a tuple (ddx, ddy)
@@ -619,10 +732,11 @@ class ReinforcementLearning:
                 new_state = self.apply_kinematics(state, action) # apply action to get new state
                 new_state = self.handle_collision(state, new_state) # handle collision with walls
                 new_s = self.state_to_index[new_state] # convert new state to state index
-                new_a, greedy_epsilon = self.epsilon_greedy_choice(Q, new_s, visits, t) # choose action using epsilon-greedy policy
+                new_a, greedy_epsilon, flag = self.epsilon_greedy_choice(Q, new_s, visits, t) # choose action using epsilon-greedy policy
                 alpha = self.learning_rate(t)
-                if t_inner >= 50:
-                    reward = -9
+                # alpha = self.learning_rate(visits[s][a], t)
+                if t_inner >= 200:
+                    reward = -999
                     escape = True
                 else:
                     reward = R[s][a]
@@ -632,9 +746,8 @@ class ReinforcementLearning:
                 a = new_a # update action
                 if escape is True:
                     break
-            end_time = time.time()
             Q_history, visit_history, not_visited,  Q_forbidden_mean, Q_track_mean = self.print_stats(world, S, Q, Q_history, visits, visit_history)
-            print(f'        Outer Iteration {t}, horizon: {horizon:.3f}, greedy-epsilon: {greedy_epsilon:.3f}, learning rate: {alpha:.3f}, not_visited: {not_visited:.3f}%, Q_track_mean: {Q_track_mean:.3f}, inner iterations: {t_inner:0{4}d}, {end_time - start_time:.2f}s')
+            print(f'        Outer Iteration {t}, horizon: {horizon:.3f}, greedy-epsilon: {greedy_epsilon:.3f}, learning rate: {alpha:.3f}, not_visited: {not_visited:.3f}%, Q_track_mean: {Q_track_mean:.3f}, inner iterations: {t_inner:0{4}d}')
         outer_end_time = time.time()
         self.learning_metrics = (Q_history, visit_history)
         self.visit_history = visits
@@ -646,6 +759,64 @@ class ReinforcementLearning:
         print('\nPolicy learning complete...')
         print(f'Training iterations: {t} --> {outer_end_time-outer_start_time:.3f}s --- {not_visited:.3f}% of position state-action pairs were not visited')
         return P
+    
+
+    # def sarsa(self, world):
+    #     S, _, _, R, Q, _, _, _, _ = self.initialize_vars(world)
+    #     # A =  [[self.alpha]*len(Q[0]) for _ in range(len(Q))]
+    #     self.reorder_states(S) # reorder track states in order of distance from goal states
+    #     Q_history = {'Q_forbidden_max': [], 'Q_track_max': [], 'Q_forbidden_mean': [], 'Q_track_mean': []}
+    #     visit_history = []
+    #     visits = np.zeros((len(Q), len(Q[0])))
+    #     outer_start_time = time.time()
+    #     for t in range(self.training_iterations + 1):
+    #         t_inner = 0
+    #         escape = False
+    #         start_time = time.time()
+    #         s, horizon = self.choose_start_state(visits, t) # initialize state randomly close to terminal state
+    #         # print(f'episode: {t} --- initial state: {self.index_to_state[s]}')
+    #         a, greedy_epsilon = self.epsilon_greedy_choice(Q, s, visits, t) # choose action using epsilon-greedy policy
+    #         while S[s] != self.goal_state:
+    #             t_inner += 1
+    #             action = self.actions[a] # action is a tuple (ddx, ddy)
+    #             state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
+    #             random_num = np.random.uniform(0, 1)
+    #             if random_num < self.transition['fail']:
+    #                 action = (0, 0) # no acceleration happens
+    #             new_state = self.apply_kinematics(state, action) # apply action to get new state
+    #             new_state = self.handle_collision(state, new_state) # handle collision with walls
+    #             new_s = self.state_to_index[new_state] # convert new state to state index
+    #             new_a, greedy_epsilon = self.epsilon_greedy_choice(Q, new_s, visits, t) # choose action using epsilon-greedy policy
+    #             alpha = self.learning_rate(t)
+    #             # alpha = self.learning_rate(visits[s][a], t)
+    #             if t_inner >= 200:
+    #                 reward = -999
+    #                 escape = True
+    #             else:
+    #                 reward = R[s][a]
+    #             predict = Q[s][a]
+    #             target = reward + (self.gamma * Q[new_s][new_a])
+    #             Q[s][a] += alpha * (target - predict) # update Q function 
+    #             # Q[s][a] += alpha * (reward + (self.gamma * Q[new_s][new_a]) - Q[s][a]) # update Q function 
+    #             visits[s][a] += 1 # update visit count
+    #             s = new_s # update state
+    #             a = new_a # update action
+    #             if escape is True:
+    #                 break
+    #         end_time = time.time()
+    #         Q_history, visit_history, not_visited,  Q_forbidden_mean, Q_track_mean = self.print_stats(world, S, Q, Q_history, visits, visit_history)
+    #         print(f'        Outer Iteration {t}, horizon: {horizon:.3f}, greedy-epsilon: {greedy_epsilon:.3f}, learning rate: {alpha:.3f}, not_visited: {not_visited:.3f}%, Q_track_mean: {Q_track_mean:.3f}, inner iterations: {t_inner:0{4}d}, {end_time - start_time:.2f}s')
+    #     outer_end_time = time.time()
+    #     self.learning_metrics = (Q_history, visit_history)
+    #     self.visit_history = visits
+    #     self.final_alpha = alpha 
+    #     self.final_greedy_epsilon = greedy_epsilon
+    #     self.final_not_visited = not_visited
+    #     P = self.extract_policy(Q) # extract policy from Q function
+    #     self.export_Q(Q) # export Q for debugging
+    #     print('\nPolicy learning complete...')
+    #     print(f'Training iterations: {t} --> {outer_end_time-outer_start_time:.3f}s --- {not_visited:.3f}% of position state-action pairs were not visited')
+    #     return P
 
 
     # def sarsa(self, world):

@@ -1,9 +1,37 @@
 
+
+
+"""
+This module contains the BresenhamLine class which is used to draw a line between two points using the Bresenham line algorithm
+for rasterification of linear lines through a series of discrete pixels on a 2D grid. The following code implementation has been 
+borrowed from an outside source found at https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm.
+
+The BresenhamLine class contains the following attributes:
+    - start: the starting point of the line
+    - end: the ending point of the line
+
+The BresenhamLine class contains the following methods:
+    - draw_low_slope_line: draw a line with a low slope
+    - draw_high_slope_line: draw a line with a high slope
+    - draw_line: draw the line between the start and end points using the Bresenham line algorithm  
+
+"""
+
 class BresenhamLine():
     def __init__(self, start, end):
         self.start = start
         self.end = end
 
+    """
+    'draw_low_slope_line' method is responsible for drawing a line with a high slope smaller than 1
+    Args:
+        x0 (int): x-coordinate of the starting point
+        y0 (int): y-coordinate of the starting point
+        x1 (int): x-coordinate of the ending point
+        y1 (int): y-coordinate of the ending point
+    Returns:
+        points (list): list of points that make up the line
+    """
     def draw_low_slope_line(self, x0, y0, x1, y1):
         points = []
         dx = x1 - x0 # total change in x
@@ -25,6 +53,16 @@ class BresenhamLine():
                 D = D + 2*dy
         return points
     
+    """
+    'draw_high_slope_line' method is responsible for drawing a line with a high slope greater than 1
+    Args:
+        x0 (int): x-coordinate of the starting point
+        y0 (int): y-coordinate of the starting point
+        x1 (int): x-coordinate of the ending point
+        y1 (int): y-coordinate of the ending point
+    Returns:
+        points (list): list of points that make up the line
+    """
     def draw_high_slope_line(self, x0, y0, x1, y1):
         points = []
         dx = x1 - x0 # total change in x
@@ -46,6 +84,11 @@ class BresenhamLine():
                 D = D + 2*dx
         return points
 
+    """
+    'draw_line' method is responsible for drawing the line between the start and end points using the Bresenham line algorithm
+    Returns:
+        points (list): list of points that make up the line
+    """
     def draw_line(self):
         x0, y0 = self.start
         x1, y1 = self.end
