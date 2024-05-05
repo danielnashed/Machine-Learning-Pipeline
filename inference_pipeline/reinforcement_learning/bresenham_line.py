@@ -1,6 +1,4 @@
 
-
-
 """
 This module contains the BresenhamLine class which is used to draw a line between two points using the Bresenham line algorithm
 for rasterification of linear lines through a series of discrete pixels on a 2D grid. The following code implementation has been 
@@ -14,7 +12,6 @@ The BresenhamLine class contains the following methods:
     - draw_low_slope_line: draw a line with a low slope
     - draw_high_slope_line: draw a line with a high slope
     - draw_line: draw the line between the start and end points using the Bresenham line algorithm  
-
 """
 
 class BresenhamLine():

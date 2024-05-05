@@ -102,7 +102,7 @@ class Dashboard:
         fig.suptitle('Learning Curves for ' + model.engine.capitalize(), fontsize=12)
         ax.plot(iterations, V_metrics, color='blue')
         ax.set_yscale('log')
-        ax.set_title('Delta Change in Value Function Over Iterations', fontsize=10)
+        ax.set_title('Max Delta Change in Value Function Over Iterations', fontsize=10)
         ax.set_xlabel('Iterations', fontsize=10)
         ax.set_ylabel('Delta V', fontsize=10)
         ax.tick_params(axis='both', which='major', labelsize=10)

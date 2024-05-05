@@ -1,25 +1,40 @@
 import copy
-import os
-from PIL import Image, ImageDraw, ImageFont
 
 """
 This module contains the PathVisualizer class which is used to visualize the path taken by the agent in the environment.
 
 The PathVisualizer class contains the following attributes:
+    - model: the model used to learn the optimal policy
+    - world: the world grid for the environment
+    - engine: the engine for the agent
+    - visit_history: the visit history for the agent
+    - image_path: the path to save the image
+    - collisions: the number of collisions
+    - average_metrics: the average metrics
 
-
-
+The PathVisualizer class contains the following methods:
+    - pretty_grid: convert the grid to emojis for visualization
+    - compass_heading: convert the action to compass heading
+    - add_stats: add stats to the visualization
+    - visualize_path: visualize the path taken by the agent
 """
 class PathVisualizer:
     def __init__(self, model, image_path, collisions, average_metrics):
         self.model = model
         self.world = model.world # get the environment
         self.engine = model.engine # get the engine name
-        self.visit_history = model.visit_history
+        self.visit_history = model.visit_history # visit count for each state-action pair
         self.image_path = image_path # get the path to save the image
         self.collisions = collisions # collisions for this race
         self.average_metrics = average_metrics # average over all races
 
+    """
+    'pretty_grid' method is responsible for converting the grid to emojis for visualization.
+    Args:
+        grid (list): grid to convert    
+    Returns:
+        list: grid with emojis
+    """
     def pretty_grid(self, grid):
         # convert the grid to emojis for visualization
         for row in range(len(grid)):
@@ -34,6 +49,13 @@ class PathVisualizer:
                     grid[row][col] = '⬜'
         return grid
 
+    """
+    'compass_heading' method is responsible for converting the velocity of the agent to compass heading.
+    Args:
+        velocity (tuple): velocity in form (vx, vy)
+    Returns:
+        str: compass heading
+    """
     def compass_heading(self, velocity):
         if velocity[0] < 0 and velocity[1] < 0:
             return '↖️'
@@ -53,28 +75,19 @@ class PathVisualizer:
             return '↘️'
         else:
             return '⏹️'
-        
-    def create_image(self, grid):
-        emoji_size = 40 
-        spacing = 5
-        image_width = len(grid[0]) * (emoji_size + spacing) - spacing
-        image_height = len(grid) * (emoji_size + spacing) - spacing
-        image = Image.new("RGB", (image_width, image_height), (255, 255, 255)) # create new image with white background
-        draw = ImageDraw.Draw(image)
-        # emoji_font = ImageFont.truetype("Arial.ttf", emoji_size)
-        # emoji_font = ImageFont.truetype("/System/Library/Fonts/Apple Color Emoji.ttc", emoji_size)  # macOS
-        y_position = 0
-        for emoji_row in grid:
-            x_position = 0
-            for emoji_character in emoji_row:
-                # draw.text((x_position, y_position), emoji_character, font=emoji_font)
-                # draw.text((x_position, y_position), emoji_character)
-                draw.text((x_position, y_position), 'W')
-                x_position += emoji_size + spacing
-            y_position += emoji_size + spacing
-        image.save("emoji_image.png")
-        return image
     
+    """
+    'add_stats' method is responsible for adding stats to the visualization.
+    Args:
+        path_len (int): number of steps
+        average_speed (float): average speed
+        average_x_vel (float): average x velocity
+        average_y_vel (float): average y velocity
+        average_x_accel (float): average x acceleration
+        average_y_accel (float): average y acceleration
+    Returns:
+        str: grid string
+    """
     def add_stats(self, path_len, average_speed, average_x_vel, average_y_vel, average_x_accel, average_y_accel):
         grid_string = ''
         # add stats for this race
@@ -110,6 +123,13 @@ class PathVisualizer:
             grid_string += '        %% of state-action pairs not visited: ' + str(round(self.model.final_not_visited, 2)) + '%\n'
         return grid_string
 
+    """
+    'visualize_path' method is responsible for visualizing the path taken by the agent and exporting it to a txt file.
+    Args:
+        path (list): path taken by the agent
+    Returns:
+        None
+    """
     def visualize_path(self, path): 
         grid = copy.deepcopy(self.world) # copy the world grid
         grid = self.pretty_grid(grid) # convert the grid to emojis for visualization
@@ -118,7 +138,6 @@ class PathVisualizer:
         average_speed = 0
         average_x_accel = 0   
         average_y_accel = 0
-        images = []
 
         # mark the path taken by the agent
         for triplet in path:
@@ -130,25 +149,15 @@ class PathVisualizer:
             average_x_accel +=  acceleration[0] # accumulate x acceleration
             average_y_accel += acceleration[1] # accumulate y acceleration
             velocity = self.compass_heading(velocity) # convert action to compass heading
-            grid[state[1]][state[0]] = velocity
-            # images.append(self.create_image(grid)) # create image for each step
+            grid[state[1]][state[0]] = velocity # plot the compass heading for current velocity of agent in state
 
         # plot final state
         if len(path) != 0:
             state = path[-1][2][0:2] # final state in form (x, y)
             if grid[state[1]][state[0]] == '🏁':
-                grid[state[1]][state[0]] = '🟢'
+                grid[state[1]][state[0]] = '🟢' # reached goal state
             else:
-                grid[state[1]][state[0]] = '🔴'
-        
-        # # create animation of the path taken by the agent
-        # images[0].save(
-        # "emoji_animation.gif",
-        # save_all=True,
-        # append_images=images[1:],
-        # duration=500,  # Duration between frames in milliseconds
-        # loop=0  # 0 means infinite looping
-        # )
+                grid[state[1]][state[0]] = '🔴' # did not reach goal state
         
         # stats: average x and y velocities
         if len(path) != 0:
