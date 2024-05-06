@@ -233,7 +233,8 @@ class ReinforcementLearning:
     def initialize_via_transfer(self):
         with open(self.transfer_learning, 'r') as f:
             reader = csv.reader(f)
-            Q = list(reader)
+            # Q = list(reader)
+            Q = [[float(cell) for cell in row] for row in reader]
         return Q
 
     """
@@ -272,19 +273,6 @@ class ReinforcementLearning:
         track_states_dists = np.linalg.norm(track_states - goal_state, axis=1) # calculate euclidian distance from all track states to goal state
         track_state_indices_sorted = track_state_indices[np.argsort(track_states_dists)] # sort track states by decreasing distance to goal state
         self.track_state_indices = track_state_indices_sorted
-
-    # # expanding horizon
-    # def choose_start_state(self, visits, t):
-    #     initial_horizon = 2000 # start with 10 states at start near terminal state #10, 1500
-    #     peak_time = 0.8 # time when horizon covers entire space of indices
-    #     growth_factor = np.log(len(self.track_state_indices) / initial_horizon) / peak_time # control growth rate
-    #     horizon = min(len(self.track_state_indices) ,initial_horizon * np.exp(t * growth_factor / self.training_iterations)) # exponential growth of horizon from 10 states to all track states
-    #     indices = self.track_state_indices[:int(horizon)] # expanding horizon of indices
-    #     freqs = np.sum(visits[indices], axis=1)
-    #     probs = 1 / (1 + (10 * freqs)) # probability inversely proportional to frequency of visit
-    #     normalized_probs = probs / sum(probs) # normalize probabilities so all sum up to 1
-    #     s = random.choices(list(indices), weights=list(normalized_probs), k=1)[0] # choose a state according to its probability
-    #     return s, horizon/len(self.track_state_indices)
 
     """
     'choose_start_state' method is responsible for choosing a start state for the agent. The method chooses a start state based on the number of visits to each
@@ -565,6 +553,7 @@ class ReinforcementLearning:
         S, V, Vlast, R, Q, P, visits = self.initialize_vars(world)
         self.Q_forbidden_indices = [s for s, terrain in S.items() if terrain == self.forbidden_state] # indices for forbidden states
         self.Q_track_indices = [s for s, terrain in S.items() if terrain != self.forbidden_state] # values for track states
+        self.start_state_indices = [index for index, terrain in self.S.items() if terrain == self.start_state] # indices for start states
         engine.state_to_index = self.state_to_index
         engine.index_to_state = self.index_to_state
         outer_start_time = time.time()
@@ -596,9 +585,10 @@ class ReinforcementLearning:
     """
     def initialize_agent(self):
         # get index of all start states in world 
-        start_state_indices = [index for index, terrain in self.S.items() if terrain == self.start_state]
+        # start_state_indices = [index for index, terrain in self.S.items() if terrain == self.start_state]
         # randomly select a start state
-        start_state_index = np.random.choice(start_state_indices)
+        start_state_index = np.random.choice(self.start_state_indices)
+        # start_state_index = np.random.choice(start_state_indices)
         return start_state_index
 
     """

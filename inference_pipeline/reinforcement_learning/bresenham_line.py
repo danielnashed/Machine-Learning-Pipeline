@@ -92,11 +92,13 @@ class BresenhamLine():
         if abs(y1 - y0) < abs(x1 - x0):
             if x0 > x1:
                 points = self.draw_low_slope_line(x1, y1, x0, y0)
+                points.reverse() # reverse the points from start to end point
             else:
                 points = self.draw_low_slope_line(x0, y0, x1, y1)
         else:
             if y0 > y1:
                 points = self.draw_high_slope_line(x1, y1, x0, y0)
+                points.reverse() # reverse the points from start to end point
             else:
                 points = self.draw_high_slope_line(x0, y0, x1, y1)
         return points

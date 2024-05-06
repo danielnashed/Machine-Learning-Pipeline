@@ -84,13 +84,17 @@ class SARSA():
             a, greedy_epsilon, flag = self.RL.epsilon_greedy_choice(Q, s, visits, t) # choose action using epsilon-greedy policy
             while S[s] != self.goal_state:
                 t_inner += 1
+                collision = False
                 action = self.actions[a] # action is a tuple (ddx, ddy)
                 state = self.index_to_state[s] # convert state index to (x, y, vx, vy)
                 random_num = np.random.uniform(0, 1)
                 if random_num < self.transition['fail']:
                     action = (0, 0) # no acceleration happens
                 new_state = self.RL.apply_kinematics(state, action) # apply action to get new state
-                new_state = self.RL.handle_collision(state, new_state) # handle collision with walls
+                new_state_after_collision = self.RL.handle_collision(state, new_state) # handle collision with walls
+                if new_state_after_collision != new_state:
+                    collision = True
+                new_state = new_state_after_collision
                 new_s = self.state_to_index[new_state] # convert new state to state index
                 new_a, greedy_epsilon, flag = self.RL.epsilon_greedy_choice(Q, new_s, visits, t) # choose action using epsilon-greedy policy
                 alpha = self.RL.learning_rate(t) # learning rate anneahling
@@ -100,6 +104,8 @@ class SARSA():
                     escape = True
                 else:
                     reward = R[s][a]
+                    if collision:
+                        reward -= -10
                 Q[s][a] += alpha * (reward + (self.gamma * Q[new_s][new_a]) - Q[s][a]) # update Q function 
                 visits[s][a] += 1 # update visit count
                 s = new_s # update state

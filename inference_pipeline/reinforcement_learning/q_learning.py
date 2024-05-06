@@ -80,6 +80,7 @@ class QLearning():
         for t in range(self.training_iterations + 1):
             t_inner = 0
             escape = False
+            collision = False
             s, horizon = self.RL.choose_start_state(visits, t) # initialize state randomly
             while S[s] != self.goal_state:
                 t_inner += 1
@@ -90,7 +91,10 @@ class QLearning():
                 if random_num < self.transition['fail']:
                     action = (0, 0) # no acceleration happens
                 new_state = self.RL.apply_kinematics(state, action) # apply action to get new state
-                new_state = self.RL.handle_collision(state, new_state) # handle collision with walls
+                new_state_after_collision = self.RL.handle_collision(state, new_state) # handle collision with walls
+                if new_state_after_collision != new_state:
+                    collision = True
+                new_state = new_state_after_collision
                 new_s = self.state_to_index[new_state] # convert new state to state index
                 alpha = self.RL.learning_rate(t) # annheal learning rate
                 # cap sequence length if agent is stuck and not reaching goal
@@ -99,6 +103,8 @@ class QLearning():
                     escape = True
                 else:
                     reward = R[s][a] # reward for taking action a in state s
+                    if collision:
+                        reward -= -10 # penalize agent for collision
                 Q[s][a] += alpha * (reward + (self.gamma * max(Q[new_s])) - Q[s][a]) # update Q function 
                 visits[s][a] += 1 # update visit count
                 s = new_s # update state

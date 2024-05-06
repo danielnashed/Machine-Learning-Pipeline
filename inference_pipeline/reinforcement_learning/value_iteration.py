@@ -88,20 +88,29 @@ class ValueIteration():
         children (list): list of tuples containing next state and probability of reaching that state
     """
     def successors(self, current_state, desired_action):
+        penalty = 1.5 # penalty for collision # 1.5
         children = []
         # [1] apply desired action
         probability = self.transition['success'] 
         new_state = self.RL.apply_kinematics(current_state, desired_action)
-        new_state = self.RL.handle_collision(current_state, new_state)
-        new_state_index = self.state_to_index[new_state]
-        children.append((new_state_index, probability))
+        new_state_after_collision = self.RL.handle_collision(current_state, new_state)
+        if new_state_after_collision == new_state: # no collision happened
+            new_state_index = self.state_to_index[new_state]
+            children.append((new_state_index, probability))
+        else:
+            new_state_index = self.state_to_index[new_state_after_collision]
+            children.append((new_state_index, probability*penalty)) # reduce reward by scaling down probability
          # [2] apply undesired action
         probability = self.transition['fail'] 
         undesired_action = (0, 0) # no acceleration happens
         new_state = self.RL.apply_kinematics(current_state, undesired_action)
-        new_state = self.RL.handle_collision(current_state, new_state)
-        new_state_index = self.state_to_index[new_state]
-        children.append((new_state_index, probability))
+        new_state_after_collision = self.RL.handle_collision(current_state, new_state)
+        if new_state_after_collision == new_state: # no collision happened
+            new_state_index = self.state_to_index[new_state]
+            children.append((new_state_index, probability))
+        else:
+            new_state_index = self.state_to_index[new_state_after_collision]
+            children.append((new_state_index, probability*penalty)) # reduce reward by scaling down probability
         return children
     
     """
@@ -148,6 +157,7 @@ class ValueIteration():
         while (self.keep_updating(V, Vlast) and t < self.training_iterations):
             Vlast = copy.deepcopy(V)  
             for s in S.keys(): # key: state_index
+                print(f'{s}/{len(S)}')
                 for a, _ in enumerate(self.actions): # a is action index
                     Q[s][a] = R[s][a] + self.gamma * self.stochastic_future_reward(s, a, Vlast) 
                 P[s] = self.RL.get_best_action(Q, s) # return index of best action to take in state s
